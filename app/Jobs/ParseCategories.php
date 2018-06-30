@@ -7,11 +7,10 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Client;
-use App\Manufacture;
+use App\Models\Category;
 
-class ParseManufactures implements ShouldQueue
+class ParseCategories implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -20,12 +19,12 @@ class ParseManufactures implements ShouldQueue
      */
     protected $api_url;
     /**
-     * @var Manufacture
+     * @var Category
      */
-    protected $manufactures;
+    protected $categories;
 
     /**
-     * ParseManufactures constructor.
+     * ParseCategories constructor.
      */
     public function __construct()
     {
@@ -35,11 +34,11 @@ class ParseManufactures implements ShouldQueue
     }
 
     /**
-     * @param Manufacture $manufactures
+     * @param Category $categories
      */
-    public function handle(Manufacture $manufactures)
+    public function handle(Category $categories)
     {
-        $this->manufactures = $manufactures;
+        $this->categories = $categories;
         $this->parse($this->api_url);
     }
 
@@ -52,17 +51,19 @@ class ParseManufactures implements ShouldQueue
         $res = $client->request('GET', $url);
         $resBody = json_decode($res->getBody());
         $nextPage = $resBody->next_page_url ?? null;
-        $manufactures = $resBody->data;
+        $categories = $resBody->data;
 
-        foreach ($manufactures as $manufacture) {
-            $name = $manufacture->{'name_ru-RU'};
-            $categoryId = $manufacture->{'category_id'};
+        foreach ($categories as $category) {
+            $name = $category->{'name_ru-RU'};
+            $categoryId = $category->{'category_id'};
+            $categoryPrentId = $category->{'category_parent_id'};
 
-            $manufacture = $this->manufactures::firstOrCreate([
+            $category = $this->categories::firstOrCreate([
                 'category_id' => $categoryId,
             ]);
-            $manufacture->{'name_ru-RU'} = $name;
-            $manufacture->save();
+            $category->{'name_ru-RU'} = $name;
+            $category->{'category_parent_id'} = $categoryPrentId;
+            $category->save();
         }
         if ($nextPage) {
             $this->parse($nextPage);

@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\ParseCategories;
 use Illuminate\Console\Command;
-use App\Jobs\ParseManufactures;
 
 class parse extends Command
 {
@@ -41,8 +41,8 @@ class parse extends Command
         $target = $this->argument('target');
         $this->info('The target for parsing is '.$target);
         switch ($target){
-            case 'manufactures':
-                ParseManufactures::dispatch();
+            case 'categories':
+                ParseCategories::dispatch();
         }
     }
 }

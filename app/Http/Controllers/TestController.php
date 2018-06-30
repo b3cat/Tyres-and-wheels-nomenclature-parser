@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ParseManufactures;
+use App\Jobs\ParseCategories;
 use Illuminate\Http\Request;
 
 class TestController extends Controller
 {
     function testQueue(){
-        ParseManufactures::dispatchNow();
+        ParseCategories::dispatchNow();
     }
 }

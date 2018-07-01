@@ -14,5 +14,6 @@
 Route::get('/', function () {
     return view('welcome');
 });
-Route::get('/test', 'TestController@testQueue');
+Route::get('/test', 'TestController@testManufacturers');
+Route::get('/test/{id}', 'TestController@testModels');
 

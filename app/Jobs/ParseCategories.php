@@ -17,7 +17,7 @@ class ParseCategories implements ShouldQueue
     /**
      * @var string
      */
-    protected $api_url;
+    protected $apiUrl;
     /**
      * @var Category
      */
@@ -25,10 +25,11 @@ class ParseCategories implements ShouldQueue
 
     /**
      * ParseCategories constructor.
+     * @param $apiUrl
      */
-    public function __construct()
+    public function __construct($apiUrl)
     {
-        $this->api_url = 'https://admin.shiniplus.ru/api/manufacturers';
+        $this->apiUrl = $apiUrl;
 
 
     }
@@ -39,7 +40,7 @@ class ParseCategories implements ShouldQueue
     public function handle(Category $categories)
     {
         $this->categories = $categories;
-        $this->parse($this->api_url);
+        $this->parse($this->apiUrl);
     }
 
     /**

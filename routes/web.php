@@ -14,6 +14,6 @@
 Route::get('/', function () {
     return view('welcome');
 });
-Route::get('/test', 'TestController@testManufacturers');
-Route::get('/test/{id}', 'TestController@testModels');
+Route::get('/manufacturers', 'TestController@testManufacturers');
+Route::get('/manufacturers/{id}/models', 'TestController@testModels');
 

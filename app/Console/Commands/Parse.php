@@ -3,7 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Jobs\ParseCategories;
+use App\Jobs\ParseExtraFields;
+use App\Jobs\ParseExtraFieldsValues;
 use App\Models\Category;
+use App\Models\Field;
 use Illuminate\Console\Command;
 
 class parse extends Command
@@ -27,13 +30,19 @@ class parse extends Command
     protected $categories;
 
     /**
+     * @var Field
+     */
+    protected $fields;
+    /**
      * parse constructor.
      * @param Category $categories
+     * @param Field $fields
      */
-    public function __construct(Category $categories)
+    public function __construct(Category $categories, Field $fields)
     {
-        $this->categories = $categories;
         parent::__construct();
+        $this->categories = $categories;
+        $this->fields = $fields;
     }
 
     /**
@@ -43,9 +52,10 @@ class parse extends Command
     {
         $target = $this->argument('target');
         $this->info('The target for parsing is '.$target);
+
         switch ($target){
             case 'manufacturers':
-                ParseCategories::dispatch('https://admin.shiniplus.ru/api/manufacturers');
+                ParseCategories::dispatch('https://admin.shiniplus.ru/api/manufacturers/');
                 break;
             case 'models':
                 $categories = $this->categories->all();
@@ -53,6 +63,16 @@ class parse extends Command
                     ParseCategories::dispatch('https://admin.shiniplus.ru/api/manufacturers/'.$category->{'category_id'});
                 }
                 break;
+            case 'fields':
+                ParseExtraFields::dispatch('https://admin.shiniplus.ru/api/extrafields/');
+                break;
+            case 'fields-values':
+                $fields = $this->fields->all();
+                foreach ($fields as $field){
+                    ParseExtraFieldsValues::dispatch('https://admin.shiniplus.ru/api/extrafields/'.$field->{'field_id'});
+                }
+                break;
+
         }
     }
 }

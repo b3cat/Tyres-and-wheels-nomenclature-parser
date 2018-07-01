@@ -49,7 +49,9 @@ class ParseCategories implements ShouldQueue
     public function parse($url)
     {
         $client = new Client();
-        $res = $client->request('GET', $url);
+        $res = $client->request('GET', $url, [
+//            'headers' => []
+        ]);
         $resBody = json_decode($res->getBody());
         $nextPage = $resBody->next_page_url ?? null;
         $categories = $resBody->data;

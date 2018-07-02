@@ -17,3 +17,4 @@ Route::get('/', function () {
 Route::get('/manufacturers', 'TestController@testManufacturers');
 Route::get('/manufacturers/{id}/models', 'TestController@testModels');
 
+Route::get('/test', 'NomenclatureController@index');

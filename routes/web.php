@@ -18,3 +18,9 @@ Route::get('/manufacturers', 'TestController@testManufacturers');
 Route::get('/manufacturers/{id}/models', 'TestController@testModels');
 
 Route::get('/test', 'NomenclatureController@index');
+
+Route::get('/whitelist/make/{id}', 'WhitelistController@makeWhitelist');
+Route::post('/whitelist/save', 'WhitelistController@saveWhitelist');
+Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Jobs\ParseCategories;
 use App\Jobs\ParseExtraFields;
 use App\Jobs\ParseExtraFieldsValues;
+use App\Jobs\ParseNomenclatures;
 use App\Models\Category;
 use App\Models\Field;
 use Illuminate\Console\Command;
@@ -71,6 +72,9 @@ class parse extends Command
                 foreach ($fields as $field){
                     ParseExtraFieldsValues::dispatch('https://admin.shiniplus.ru/api/extrafields/'.$field->{'field_id'});
                 }
+                break;
+            case 'nomenclatures':
+                ParseNomenclatures::dispatch('https://admin.shiniplus.ru/api/nomenclature/');
                 break;
 
         }

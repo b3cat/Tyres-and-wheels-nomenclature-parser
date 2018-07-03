@@ -48,8 +48,10 @@ class ParseNomenclatures implements ShouldQueue
         $nomenclatures = $resBody->data;
         foreach ($nomenclatures as $value){
             $string = $value->{'source_string'};
+            $productManufacturer = $value->{'product_manufacturer'};
             $this->nomenclatures::firstOrCreate([
                 'source_string' => $string,
+                'product_manufacturer' => $productManufacturer
             ]);
         }
         if ($nextPage) {

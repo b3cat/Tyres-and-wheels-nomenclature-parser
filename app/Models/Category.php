@@ -27,5 +27,20 @@ class Category extends Model
     public function whitelist(){
         return $this->morphMany('App\Models\WhiteList', 'whitelisted');
     }
+    public function isTire(){
+        return $this->{'category_parent_id'} === 1 ? true : false;
+    }
+    public function isModel(){
+        return ($this->{'category_parent_id'} !== 1 && $this->{'category_parent_id'} !== 2)? true : false;
+    }
+    public function whitelistRegExp(){
+        $whitelistItems = $this->{'whitelist'};
+        $whitelistRegExp = preg_quote($this->{'name_ru-RU'}, '~');
+        foreach ($whitelistItems as $item){
+            $whitelistRegExp .= '|'.preg_quote($item->{'string'});
+        }
+        $whitelistRegExp = '~(?<category>'.$whitelistRegExp.')~i';
+        return $whitelistRegExp;
+    }
 
 }

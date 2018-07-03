@@ -16,6 +16,7 @@ class CreateNomenclaturesTable extends Migration
         Schema::create('nomenclatures', function (Blueprint $table) {
             $table->increments('id');
             $table->string('source_string');
+            $table->string('product_manufacturer');
             $table->timestamps();
         });
     }

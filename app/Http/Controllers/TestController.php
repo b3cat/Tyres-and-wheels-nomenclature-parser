@@ -17,12 +17,16 @@ class TestController extends Controller
         $tyresManufacturers = $categoryModel->where('category_parent_id', '=', '1')->get();
         echo '<h1>Производители шин:</h1>';
         foreach ($tyresManufacturers  as $manufacturer){
-            echo '<a href="/manufacturers/'.$manufacturer->{'category_id'}.'/models">'.$manufacturer->{'name_ru-RU'}.'</a><br>';
+            echo '<a href="/manufacturers/'.$manufacturer->{'category_id'}.'/models">'.$manufacturer->{'name_ru-RU'}.'</a>';
+            echo ' (<a href="'.url('whitelist/make/'.$manufacturer->{'id'}).'">Перейти в whitelist</a>)<br>';
+
         }
         $wheelManufacturers = $categoryModel->where('category_parent_id', '=', '2')->get();
         echo '<h1>Производители дисков:</h1>';
         foreach ($wheelManufacturers  as $manufacturer){
-            echo '<a href="/manufacturers/'.$manufacturer->{'category_id'}.'/models">'.$manufacturer->{'name_ru-RU'}.'</a><br>';
+            echo '<a href="/manufacturers/'.$manufacturer->{'category_id'}.'/models">'.$manufacturer->{'name_ru-RU'}.'</a>';
+            echo ' (<a href="'.url('whitelist/make/'.$manufacturer->{'id'}).'">Перейти в whitelist</a>)<br>';
+
         }
     }
 
@@ -37,7 +41,8 @@ class TestController extends Controller
         $models = $categoryModel->where('category_parent_id', '=', $id)->get();
         foreach ($models  as $model){
 //            dd($model->allParentCategories);
-            echo $model->{'name_ru-RU'}.'<br>';
+            echo $model->{'name_ru-RU'};
+            echo ' (<a href="'.url('whitelist/make/'.$model->{'id'}).'">Перейти в whitelist</a>)<br>';
         }
     }
 }

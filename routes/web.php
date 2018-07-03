@@ -24,3 +24,5 @@ Route::post('/whitelist/save', 'WhitelistController@saveWhitelist');
 Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
+Route::get('/nomenclature/test', 'NomenclatureController@testParser');
+Route::post('/nomenclature/parse', 'NomenclatureController@parse');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\ParseCategories;
 use App\Models\Category;
+use App\Models\TestResult;
 use Illuminate\Http\Request;
 
 class TestController extends Controller
@@ -44,5 +45,10 @@ class TestController extends Controller
             echo $model->{'name_ru-RU'};
             echo ' (<a href="'.url('whitelist/make/'.$model->{'id'}).'">Перейти в whitelist</a>)<br>';
         }
+    }
+    function showTestResults(TestResult $testResultModel){
+        return view('tests.showtestresults', [
+            'results' => $testResultModel->all()
+        ]);
     }
 }

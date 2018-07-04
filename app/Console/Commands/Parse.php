@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Jobs\ParseCategories;
 use App\Jobs\ParseExtraFields;
 use App\Jobs\ParseExtraFieldsValues;
+use App\Jobs\ParseMain;
 use App\Jobs\ParseNomenclatures;
 use App\Models\Category;
 use App\Models\Field;
@@ -75,6 +76,9 @@ class parse extends Command
                 break;
             case 'nomenclatures':
                 ParseNomenclatures::dispatch('https://admin.shiniplus.ru/api/nomenclature/');
+                break;
+            case 'main':
+                ParseMain::dispatchNow();
                 break;
 
         }

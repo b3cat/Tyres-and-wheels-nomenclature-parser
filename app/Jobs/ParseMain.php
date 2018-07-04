@@ -1,85 +1,67 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Jobs;
 
 use App\Models\Category;
 use App\Models\Field;
 use App\Models\FieldsValue;
 use App\Models\Nomenclature;
 use App\Models\Whitelist;
-use Illuminate\Http\Request;
+use App\Models\TestResult;
+use Illuminate\Bus\Queueable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 
-class NomenclatureController extends Controller
+class ParseMain implements ShouldQueue
 {
-    function index(Category $categoryModel, Nomenclature $nomenclatureModel)
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+
+    protected $nomenclatures;
+    /**
+     * Create a new job instance.
+     *
+     * @return void
+     */
+    public function __construct()
     {
-//        $sourceStrings = $nomenclatureModel->inRandomOrder()->get([
-//            'sourceString',
-//            'product_manufacturer'
-//        ]);
-//        $categories = $categoryModel->where('category_parent_id', '=', '1')->get();
-//        $counter = 0;
-//        $count = 2705;
-//        foreach ($sourceStrings as $sourceString){
-//            if(!$sourceString->isTire()){
-//                $count--;
-//                continue;
-//            }
-//            $str = $sourceString->{'sourceString'};
-//            $categoryId = 0;
-//            $modelId = 0;
-//            foreach ($categories as $manufacturer){
-//                $whitelist = '';
-//                foreach ($manufacturer->whitelist as $value){
-//                    $whitelist .= '|'.preg_quote($value->{'string'},'/');
-//                }
-//                $re = '/'.$manufacturer->{'name_ru-RU'}.$whitelist.'/mi';
-////                dd($re);
-//                preg_match($re, $str, $matches, PREG_OFFSET_CAPTURE, 0);
-//                if($matches){
-//                    $categoryId = $manufacturer->{'category_id'};
-//                }
-//            }
-//            if($categoryId){
-//                $models = $categoryModel->where('category_parent_id', '=', $categoryId)->get();
-//                foreach ($models as $model){
-//                    $whitelist = preg_quote($model->{'name_ru-RU'},'/');
-//                    foreach ($model->whitelist as $value){
-//                        $whitelist .= '|'.preg_quote($value->{'string'},'/');
-//                    }
-//                    $re = '/'.$whitelist.'/mi';
-//
-//                    preg_match($re, $str, $matches, PREG_OFFSET_CAPTURE, 0);
-//                    if($matches){
-//                        $modelId = $model->{'category_id'};
-//                    }
-//                }
-//            }
-//            if($modelId && $categoryId){
-////                echo '<hr>'.$str.'<hr>';
-//                $counter++;
-//            } else {
-//                echo 'model_id: '.($modelId ? $modelId : '');
-//                echo 'category_id: '.($categoryId ? $categoryId : '');
-//                echo '<hr><b>Не запарсил </b>'.$str.'<hr>';
-//                echo '<br><br>';
-//
-//            }
-//
-//
-//        }
-//        echo $counter.' из '.$count;
+        //
     }
 
-    function testParser()
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle(Nomenclature $nomenclatureModel, TestResult $testResultModel)
     {
-        return view('nomenclature.test');
-    }
+        $testResult = $testResultModel::create([
+           'name' => 'Парсим шины диски',
+            'parsed_items_number' => 0,
+            'parsed_fields_number' => 0,
+            'fields_number' => 0,
+        ]);
+        $nomenclatures = $nomenclatureModel->all();
+        $fieldsNumber = 7;
 
-    function parse(Request $request)
+        foreach($nomenclatures as $nomenclature){
+            $testResult->{'fields_number'} += $fieldsNumber;
+            $string = $nomenclature->{'source_string'};
+            $result = $this->parse($string);
+            $result['manufacturer']['status']?$testResult->{'parsed_fields_number'}++:null;
+            $result['model']['status']?$testResult->{'parsed_fields_number'}++:null;
+            foreach ($result['fields'] as $item){
+                $item['status']?$testResult->{'parsed_fields_number'}++:null;
+            }
+        }
+        $testResult->{'parsed_items_number'} = $nomenclatures->count();
+        $testResult->save();
+//        dd('Количество элементов парсинга: '.$nomenclatures->count(), 'Получены значения для '.$parsedFields.' полей из '.$allFieldsNumber. ' ('.(($parsedFields/$allFieldsNumber)*100).'%)');
+    }
+    protected function parse($sourceString)
     {
-        $data = $request->only('source_string');
-        $sourceString = $data['source_string'];
         $sourceString = preg_replace('~,~', '.', $sourceString);
         $response['sourceString'] = $sourceString;
         $widthAndHeight = $this->parseWidthAndHeight($sourceString, 1, 2);
@@ -91,9 +73,7 @@ class NomenclatureController extends Controller
         $response['manufacturer'] = $this->parseCategory($sourceString);
         $response['model'] = $this->parseCategory($sourceString, $response['manufacturer']['id']);
         $response['status'] = !preg_match('~\w~', $sourceString) ? true : false;
-        return view('nomenclature.test', [
-            'response' => $response
-        ]);
+        return $response;
     }
 
     /**
@@ -110,58 +90,32 @@ class NomenclatureController extends Controller
         ];
         $categoryModel = new Category;
 //        dd($sourceString);
-        $matches = [];
+
         $categories = $categoryModel::search($sourceString)->where('category_parent_id', $parent_category ? $parent_category : 1)->get();
         foreach ($categories as $category) {
 
             if (preg_match('~' . $category{'name_ru-RU'} . '~i', $sourceString, $m)) {
                 if (!$parent_category or $category->{'category_parent_id'} === $parent_category) {
-                    if($response['displayName'] < $category->{'name_ru-RU'}){
-                        $response['id'] = $category->{'category_id'};
-                        $response['displayName'] = $category->{'name_ru-RU'};
-                        $response['status'] = true;
-                        $matches = $m;
-                    }
+                    $response['id'] = $category->{'category_id'};
+                    $response['displayName'] = $category->{'name_ru-RU'};
+                    $response['status'] = true;
+                    $sourceString = str_replace($m[0], '', $sourceString);
                 }
             }
         }
         $whitelist = Whitelist::search($sourceString)->get();
         foreach ($whitelist as $item) {
             if (preg_match('~' . $item{'string'} . '~i', $sourceString, $m)) {
-                $category = $categoryModel->find($item->{'whitelisted_id'});
-                if (!$parent_category or $category->{'category_parent_id'} === $parent_category) {
-                    if($response['displayName'] < $category->{'name_ru-RU'}) {
-                        $response['id'] = $category->{'category_id'};
-                        $response['displayName'] = $category->{'name_ru-RU'};
-                        $response['status'] = true;
-                        $matches = $m;
-                    }
+                $result = $categoryModel->find($item->{'whitelisted_id'});
+                if (!$parent_category or $result->{'category_parent_id'} === $parent_category) {
+                    $response['id'] = $result->{'category_id'};
+                    $response['displayName'] = $result->{'name_ru-RU'};
+                    $response['status'] = true;
+                    $sourceString = str_replace($m[0], '', $sourceString);
                 }
             }
         }
-        $sourceString = str_replace($matches[0], '', $sourceString);
         return $response;
-//        $categories = $categoryModel->all();
-//        $matches = array();
-//        foreach ($categories as $category){
-//            if(preg_match($category->whitelistRegExp(), $sourceString, $m)){
-//
-//                if($category->isTire() && !$parent_category){
-//                    $response['id'] = $category->{'category_id'};
-//                    $response['displayName'] = $category->{'name_ru-RU'};
-//                    $matches = $m;
-//                }
-//                if($category->isModel() && $category->{'category_parent_id'} === $parent_category){
-//                    if(strlen($response['displayName']) < strlen($category->{'name_ru-RU'})){
-//                        $response['id'] = $category->{'category_id'};
-//                        $response['displayName'] = $category->{'name_ru-RU'};
-//                        $matches = $m;
-//                    }
-//                }
-//            }
-//        }
-//        $sourceString = str_replace($matches['category'], '',$sourceString, $c);
-//        return $response;
     }
 
     /**
@@ -291,7 +245,7 @@ class NomenclatureController extends Controller
         ];
         $speedIndexField = $fieldModel->where('field_id', '=', $speedIndexFieldId)->first();
         $response['fieldName'] = $speedIndexField->{'name_ru-RU'};
-        $regExp = '~\s'.$speedIndexField->prepareForRegExp().'(?:\s|$)~i';
+        $regExp = '~' . $speedIndexField->prepareForRegExp() . '$~i';
         if (preg_match($regExp, $sourceString, $m)) {
             $response['displayValue'] = $m['field' . $speedIndexFieldId];
             $response['fieldsValueId'] = $fieldsValueModel->where([

@@ -39,7 +39,7 @@ class ParseNomenclatures implements ShouldQueue
         $this->nomenclatures = $nomenclatures;
         $this->parse($this->apiUrl);
     }
-    public function parse($url)
+    public function parse($url, $currentParsed = 0)
     {
         $client = new Client();
         $res = $client->request('GET', $url);
@@ -53,9 +53,11 @@ class ParseNomenclatures implements ShouldQueue
                 'source_string' => $string,
                 'product_manufacturer' => $productManufacturer
             ]);
+            $currentParsed++;
+            dump('Запрасил '.$currentParsed.' строк');
         }
         if ($nextPage) {
-            $this->parse($nextPage);
+            $this->parse($nextPage, $currentParsed);
         }
     }
 }

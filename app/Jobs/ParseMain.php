@@ -31,9 +31,8 @@ class ParseMain implements ShouldQueue
     }
 
     /**
-     * Execute the job.
-     *
-     * @return void
+     * @param Nomenclature $nomenclatureModel
+     * @param TestResult $testResultModel
      */
     public function handle(Nomenclature $nomenclatureModel, TestResult $testResultModel)
     {
@@ -44,33 +43,86 @@ class ParseMain implements ShouldQueue
             'fields_number' => 0,
         ]);
         $nomenclatures = $nomenclatureModel->all();
-        $fieldsNumber = 7;
-
-        foreach($nomenclatures as $nomenclature){
-            $testResult->{'fields_number'} += $fieldsNumber;
-            $string = $nomenclature->{'source_string'};
-            $result = $this->parse($string);
-            $result['manufacturer']['status']?$testResult->{'parsed_fields_number'}++:null;
-            $result['model']['status']?$testResult->{'parsed_fields_number'}++:null;
-            foreach ($result['fields'] as $item){
-                $item['status']?$testResult->{'parsed_fields_number'}++:null;
-            }
-        }
+        $fieldsNumber = [
+            0 => 10,
+            1 => 12
+        ];
         $testResult->{'parsed_items_number'} = $nomenclatures->count();
-        $testResult->save();
+        foreach($nomenclatures as $key => $nomenclature){
+            $string = $nomenclature->{'source_string'};
+            $groupId = 1;
+            if(preg_match('~(?:диск| DIA[\s\d]| ET[\s\d])~i', $string)){
+                $groupId = 2;
+            }
+            $result = $this->parse($string, $groupId);
+            if($result['manufacturer']){
+                $testResult->{'fields_number'} += $fieldsNumber[$groupId-1];
+
+                $result['manufacturer']['status']?$testResult->{'parsed_fields_number'}++:null;
+                $result['model']['status']?$testResult->{'parsed_fields_number'}++:null;
+                foreach ($result['fields'] as $item){
+                    $item['status']?$testResult->{'parsed_fields_number'}++:null;
+                }
+            }
+            dump('Запарисл '.($key + 1).' строку');
+            $testResult->save();
+
+        }
+
 //        dd('Количество элементов парсинга: '.$nomenclatures->count(), 'Получены значения для '.$parsedFields.' полей из '.$allFieldsNumber. ' ('.(($parsedFields/$allFieldsNumber)*100).'%)');
     }
-    protected function parse($sourceString)
+    protected function parse($sourceString, $groupId)
     {
         $sourceString = preg_replace('~,~', '.', $sourceString);
         $response['sourceString'] = $sourceString;
-        $widthAndHeight = $this->parseWidthAndHeight($sourceString, 1, 2);
-        $response['fields']['width'] = $widthAndHeight['width'];
-        $response['fields']['height'] = $widthAndHeight['height'];
-        $response['fields']['radius'] = $this->parseRadius($sourceString, 3);
-        $response['fields']['carryingCapacityIndex'] = $this->parseCarryingCapacityIndex($sourceString, 4);
-        $response['fields']['speedIndex'] = $this->parseSpeedIndex($sourceString, 5);
-        $response['manufacturer'] = $this->parseCategory($sourceString);
+        $fieldModel = new Field;
+        $fields = $fieldModel->where('group', $groupId)->get();
+        if($groupId === 1){
+            $parseSetting = [
+                [
+                    'regExpMask' => '~_[/x\*]~i',
+                    'doNotTouchSourceString' => true
+                ],
+                ['regExpMask' => '~ [0-9]+[/x\*]_~i'], ['regExpMask' => '~[R/] *_~'], ['regExpMask' => '~\s(?<toDelete>_)\w{0,1} *~'], ['regExpMask' => '~\s_(?:\s|$)~i'],
+                ['regExpMask' => '~_~'], ['regExpMask' => '~_~'], ['regExpMask' => '~_~'], ['regExpMask' => '~_~'], ['regExpMask' => '~_~']
+            ];
+        } else {
+            $parseSetting = [
+                [
+                    'regExpMask' => '~_[\.[0-9]*[хx\*/]~i',
+                    'doNotTouchSourceString' => true
+                ],
+                [
+                    'regExpMask' => '~(?<toDelete>[0-9]+[\.]*[0-9]*[хx\*/]_)~ui',
+                ],
+                [
+                    'regExpMask' => '~_[\.[0-9]*[хx\*/]~i',
+                    'doNotTouchSourceString' => true
+                ],
+                [
+                    'regExpMask' => '~(?<toDelete>[0-9]+[хx\*/]_)~ui',
+                ],
+                [
+                    'regExpMask' => '~(?:DIA|d)\s*_~',
+                ],
+                [
+                    'regExpMask' => '~ET\s*_~i',
+                ],
+                [
+                    'regExpMask' => '~pizda~i',
+                ],
+                [
+                    'regExpMask' => '~pizda~i',
+                ],
+            ];
+        }
+
+        foreach ($fields as $currentFieldId => $field){
+            $response['fields'][$field->{'name_ru-RU'}] = $this->parseField($sourceString,
+                $field->{'field_id'},
+                $parseSetting[$currentFieldId]['regExpMask'], isset($parseSetting[$currentFieldId]['doNotTouchSourceString']) ? false : true);
+        }
+        $response['manufacturer'] = $this->parseCategory($sourceString, $groupId);
         $response['model'] = $this->parseCategory($sourceString, $response['manufacturer']['id']);
         $response['status'] = !preg_match('~\w~', $sourceString) ? true : false;
         return $response;
@@ -79,7 +131,7 @@ class ParseMain implements ShouldQueue
     /**
      * @param string $sourceString
      * @param int $parent_category
-     * @return array
+     * @return mixed
      */
     protected function parseCategory(string &$sourceString, $parent_category = 0)
     {
@@ -88,172 +140,64 @@ class ParseMain implements ShouldQueue
             'displayName' => '',
             'status' => false
         ];
+        $matches[0] = '';
         $categoryModel = new Category;
-//        dd($sourceString);
-
-        $categories = $categoryModel::search($sourceString)->where('category_parent_id', $parent_category ? $parent_category : 1)->get();
+        $categories = $categoryModel::search(strtolower($sourceString))->where('category_parent_id', $parent_category)->get();
         foreach ($categories as $category) {
 
-            if (preg_match('~' . $category{'name_ru-RU'} . '~i', $sourceString, $m)) {
-                if (!$parent_category or $category->{'category_parent_id'} === $parent_category) {
+            if (preg_match('~' . preg_quote($category{'name_ru-RU'}, '~') . '~ui', $sourceString, $m)) {
+                if ((!$parent_category and ($category->{'category_parent_id'} === 1 or $category->{'category_parent_id'} === 2)) or $category->{'category_parent_id'} === $parent_category) {
                     $response['id'] = $category->{'category_id'};
                     $response['displayName'] = $category->{'name_ru-RU'};
                     $response['status'] = true;
-                    $sourceString = str_replace($m[0], '', $sourceString);
+                    $matches = $m;
                 }
             }
         }
         $whitelist = Whitelist::search($sourceString)->get();
         foreach ($whitelist as $item) {
-            if (preg_match('~' . $item{'string'} . '~i', $sourceString, $m)) {
+            if (preg_match('~' . preg_quote($item{'string'}, '~') . '~ui', $sourceString, $m)) {
                 $result = $categoryModel->find($item->{'whitelisted_id'});
-                if (!$parent_category or $result->{'category_parent_id'} === $parent_category) {
+                if ((!$parent_category and ($result->{'category_parent_id'} === 1 or $result->{'category_parent_id'} === 2)) or $result->{'category_parent_id'} === $parent_category) {
                     $response['id'] = $result->{'category_id'};
                     $response['displayName'] = $result->{'name_ru-RU'};
                     $response['status'] = true;
-                    $sourceString = str_replace($m[0], '', $sourceString);
+
+                    $matches = $m;
                 }
             }
         }
+        $sourceString = str_replace($matches[0], '', $sourceString);
+
+        if(!$response['id'])return false;
         return $response;
     }
 
-    /**
-     * @param string $sourceString
-     * @param int $widthFieldId
-     * @param int $heightFieldId
-     * @return array
-     */
-    protected function parseWidthAndHeight(&$sourceString, $widthFieldId, $heightFieldId)
-    {
+    protected function parseField(&$sourceString, $fieldId, $regExpMask, $modifySourceString = true){
         $fieldModel = new Field;
         $fieldsValueModel = new FieldsValue;
         $response = [
-            'width' => [
-                'fieldId' => $widthFieldId,
-                'fieldsValueId' => 0,
-                'displayValue' => '',
-                'fieldName' => '',
-                'status' => false,
-            ],
-            'height' => [
-                'fieldId' => $heightFieldId,
-                'fieldsValueId' => 0,
-                'displayValue' => '',
-                'fieldName' => '',
-                'status' => false,
-            ]
-        ];
-        $widthField = $fieldModel->where('field_id', '=', $widthFieldId)->first();
-        $response['width']['fieldName'] = $widthField->{'name_ru-RU'};
-        $response['width']['fieldName'] = $widthField->{'name_ru-RU'};
-        $heightField = $fieldModel->where('field_id', '=', $heightFieldId)->first();
-        $response['height']['fieldName'] = $heightField->{'name_ru-RU'};
-        $regExp = '~' . $widthField->prepareForRegExp() . '[/x\*]' . $heightField->prepareForRegExp() . '~';
-        if (preg_match($regExp, $sourceString, $m)) {
-            $response['width']['displayValue'] = $width = $m['field' . $widthFieldId];
-            $response['width']['fieldsValueId'] = $fieldsValueModel->where([
-                ['field_id', '=', $widthFieldId],
-                ['name_ru-RU', '=', $response['width']['displayValue']]
-            ])->first()->{'fields_value_id'};
-            $response['width']['status'] = true;
-
-
-            $response['height']['displayValue'] = $width = $m['field' . $heightFieldId];
-            $response['height']['fieldsValueId'] = $fieldsValueModel->where([
-                ['field_id', '=', $heightFieldId],
-                ['name_ru-RU', '=', $response['height']['displayValue']]
-            ])->first()->{'fields_value_id'};
-            $response['height']['status'] = true;
-            $sourceString = str_replace($m[0], '', $sourceString);
-        }
-        return $response;
-    }
-
-    /**
-     * @param $sourceString
-     * @param $radiusFieldId
-     * @return array
-     */
-    protected function parseRadius(&$sourceString, $radiusFieldId)
-    {
-        $fieldModel = new Field;
-        $fieldsValueModel = new FieldsValue;
-        $response = [
-            'fieldId' => $radiusFieldId,
+            'fieldId' => $fieldId,
             'fieldsValueId' => 0,
             'displayValue' => '',
             'fieldName' => '',
             'status' => false,
         ];
-        $radiusField = $fieldModel->where('field_id', '=', $radiusFieldId)->first();
-        $response['fieldName'] = $radiusField->{'name_ru-RU'};
-        $regExp = '~R' . $radiusField->prepareForRegExp() . '~';
-        if (preg_match($regExp, $sourceString, $m)) {
-            $response['displayValue'] = $m['field' . $radiusFieldId];
-            $response['fieldsValueId'] = $fieldsValueModel->where([
-                ['field_id', '=', $radiusFieldId],
-                ['name_ru-RU', '=', $response['displayValue']]
-            ])->first()->{'fields_value_id'};
-            $response['status'] = true;
-            $sourceString = str_replace($m[0], '', $sourceString);
-        }
-        return $response;
-    }
+        $field = $fieldModel->where('field_id', $fieldId)->first();
+        $response['fieldName'] = $field->{'name_ru-RU'};
+        $regExp = str_replace('_', $field->prepareForRegExp(), $regExpMask);
 
-    /**
-     * @param $sourceString
-     * @param $carryingCapacityIndexFieldId
-     * @return array
-     */
-    protected function parseCarryingCapacityIndex(&$sourceString, $carryingCapacityIndexFieldId)
-    {
-        $fieldModel = new Field;
-        $fieldsValueModel = new FieldsValue;
-        $response = [
-            'fieldId' => $carryingCapacityIndexFieldId,
-            'fieldsValueId' => 0,
-            'displayValue' => '',
-            'fieldName' => '',
-            'status' => false,
-        ];
-        $carryingCapacityIndexField = $fieldModel->where('field_id', '=', $carryingCapacityIndexFieldId)->first();
-        $response['fieldName'] = $carryingCapacityIndexField->{'name_ru-RU'};
-        $regExp = '~' . $carryingCapacityIndexField->prepareForRegExp() . '~';
-        if (preg_match($regExp, $sourceString, $m)) {
-            $response['displayValue'] = $m['field' . $carryingCapacityIndexFieldId];
-            $response['fieldsValueId'] = $fieldsValueModel->where([
-                ['field_id', '=', $carryingCapacityIndexFieldId],
-                ['name_ru-RU', '=', $response['displayValue']]
-            ])->first()->{'fields_value_id'};
-            $response['status'] = true;
-            $sourceString = str_replace($m[0], '', $sourceString);
-        }
-        return $response;
-    }
 
-    protected function parseSpeedIndex(&$sourceString, $speedIndexFieldId)
-    {
-        $fieldModel = new Field;
-        $fieldsValueModel = new FieldsValue;
-        $response = [
-            'fieldId' => $speedIndexFieldId,
-            'fieldsValueId' => 0,
-            'displayValue' => '',
-            'fieldName' => '',
-            'status' => false,
-        ];
-        $speedIndexField = $fieldModel->where('field_id', '=', $speedIndexFieldId)->first();
-        $response['fieldName'] = $speedIndexField->{'name_ru-RU'};
-        $regExp = '~' . $speedIndexField->prepareForRegExp() . '$~i';
-        if (preg_match($regExp, $sourceString, $m)) {
-            $response['displayValue'] = $m['field' . $speedIndexFieldId];
+        if(preg_match($regExp, $sourceString, $m)){
+            $response['displayValue'] = $m['field' . $fieldId];
             $response['fieldsValueId'] = $fieldsValueModel->where([
-                ['field_id', '=', $speedIndexFieldId],
+                ['field_id', '=', $fieldId],
                 ['name_ru-RU', '=', $response['displayValue']]
             ])->first()->{'fields_value_id'};
             $response['status'] = true;
-            $sourceString = str_replace($m[0], '', $sourceString);
+            if($modifySourceString){
+                $sourceString = str_replace(isset($m['toDelete']) ? $m['toDelete'] : $m[0], '', $sourceString);
+            }
         }
         return $response;
     }

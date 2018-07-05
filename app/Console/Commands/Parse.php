@@ -75,7 +75,7 @@ class parse extends Command
                 }
                 break;
             case 'nomenclatures':
-                ParseNomenclatures::dispatch('https://admin.shiniplus.ru/api/nomenclature/');
+                ParseNomenclatures::dispatchNow('https://admin.shiniplus.ru/api/nomenclature/');
                 break;
             case 'main':
                 ParseMain::dispatchNow();

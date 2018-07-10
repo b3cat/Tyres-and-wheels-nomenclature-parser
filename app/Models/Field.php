@@ -12,6 +12,23 @@ class Field extends Model
     public function values(){
         return $this->hasMany('App\Models\FieldsValue', 'field_id', 'field_id');
     }
+    public function valuesList(){
+        $values = $this->{'values'};
+        $response = [];
+        $response[0] = 'Нет значения';
+        foreach ($values as $value){
+            $response[$value->{'fields_value_id'}] = $value->{'name_ru-RU'};
+        }
+        return $response;
+    }
+    static function allValueLists(){
+        $fields = Field::all();
+        $response = [];
+        foreach ($fields as $field){
+            $response[$field->{'field_id'}] = $field->valuesList();
+        }
+        return $response;
+    }
     public function prepareForRegExp(){
         $values = $this->{'values'};
         $values = $values->sortByDesc(function($value) {

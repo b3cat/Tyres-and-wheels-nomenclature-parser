@@ -9,6 +9,7 @@
         "algolia/algoliasearch-client-php": "^1.27",
         "barryvdh/laravel-ide-helper": "^2.4",
         "cvaize/laratrust-admin": "^0.1.2",
+        "doctrine/dbal": "^2.7",
         "fideloper/proxy": "^4.0",
         "guzzlehttp/guzzle": "^6.3",
         "laravel/framework": "5.6.*",
@@ -20,6 +21,7 @@
         "teamtnt/laravel-scout-tntsearch-driver": "^3.0"
     },
     "require-dev": {
+        "barryvdh/laravel-debugbar": "^3.1",
         "filp/whoops": "^2.0",
         "fzaninotto/faker": "^1.4",
         "mockery/mockery": "^1.0",

@@ -13,7 +13,7 @@ class CreatePoductFieldsTable extends Migration
      */
     public function up()
     {
-        Schema::create('poduct_fields', function (Blueprint $table) {
+        Schema::create('product_fields', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('product_id');
             $table->unsignedInteger('field_id');
@@ -29,6 +29,6 @@ class CreatePoductFieldsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('poduct_fields');
+        Schema::dropIfExists('product_fields');
     }
 }

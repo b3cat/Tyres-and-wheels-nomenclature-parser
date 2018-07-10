@@ -10,15 +10,20 @@ let mix = require('laravel-mix');
  | file for the application as well as bundling up all the JS files.
  |
  */
-
 mix.styles([
-    'node_modules/bootstrap/dist/css/bootstrap.min.css'
-], 'public/css/all.css')
-    .scripts([
-        'node_modules/jquery/dist/jquery.min.js',
-        'node_modules/jquery-mask-plugin/dist/jquery.mask.min.js',
-        'node_modules/popper.js/dist/umd/popper.min.js',
-        'node_modules/bootstrap/dist/js/bootstrap.min.js'
-    ], 'public/js/all.js')
+    'node_modules/bootstrap/dist/css/bootstrap.min.css',
+    'node_modules/jquery-ui/themes/all.css',
+    'node_modules/select2/dist/css/select2.min.css',
+], 'public/css/all.css').scripts([
+    'node_modules/jquery/dist/jquery.min.js',
+    'node_modules/jquery-mask-plugin/dist/jquery.mask.min.js',
+    'node_modules/select2/dist/js/select2.min.js',
+    // 'node_modules/jquery-ui/ui/widgets/autocomplete.js',
+    'node_modules/popper.js/dist/umd/popper.min.js',
+    'node_modules/bootstrap/dist/js/bootstrap.min.js',
+    'node_modules/bootstrap/dist/js/bootstrap.min.js',
+
+], 'public/js/all.js')
     .js('resources/assets/js/app.js', 'public/js')
     .sass('resources/assets/sass/app.scss', 'public/css');
+mix.disableNotifications();

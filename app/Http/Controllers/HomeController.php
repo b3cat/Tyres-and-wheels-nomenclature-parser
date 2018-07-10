@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FieldsValue;
+use App\Models\Product;
+use App\Models\ProductField;
 use Illuminate\Http\Request;
 use App\Models\Users\User;
 

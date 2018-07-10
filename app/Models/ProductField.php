@@ -9,4 +9,10 @@ class ProductField extends Model
     protected $fillable = [
         'product_id', 'field_id', 'fields_value_id'
     ];
+    public function field(){
+        return $this->belongsTo('App\Models\Field', 'field_id', 'field_id');
+    }
+    public function value(){
+        return $this->belongsTo('App\Models\FieldsValue', 'fields_value_id', 'fields_value_id');
+    }
 }

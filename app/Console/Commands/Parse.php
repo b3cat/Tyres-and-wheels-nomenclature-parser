@@ -62,7 +62,7 @@ class parse extends Command
             case 'models':
                 $categories = $this->categories->all();
                 foreach ($categories as $category){
-                    ParseCategories::dispatch('https://admin.shiniplus.ru/api/manufacturers/'.$category->{'category_id'});
+                    ParseCategories::dispatchNow('https://admin.shiniplus.ru/api/manufacturers/'.$category->{'category_id'});
                 }
                 break;
             case 'fields':

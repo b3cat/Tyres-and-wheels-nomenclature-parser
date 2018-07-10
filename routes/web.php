@@ -40,8 +40,15 @@ Route::group(['middleware' => ['role:admin']], function () {
 });
 
 Route::group([
-    'prefix' => 'nomenclature',
+    'prefix' => 'tiresandwheels',
     'middleware' => ['role:content-manager']
 ], function() {
+    Route::get('whitelists', 'NomenclatureController@whitelists')->name('whitelists.index');
+    Route::post('whitelists/search', 'NomenclatureController@whitelistsSearch')->name('whitelists.search');
+    Route::get('whitelists/search/{id}', 'NomenclatureController@whitelistsGetModels')->name('whitelists.getmodels');
+    Route::get('whitelists/get/{id}', 'NomenclatureController@whitelistsGet')->name('whitelists.get');
     Route::get('', 'NomenclatureController@index');
+    Route::get('errors', 'NomenclatureController@errors');
+    Route::post('/products/update', 'ProductController@updateFromErrors')->name('taw.product.update');
 });
+Route::get('/search/autocomplete', 'WhitelistController@autoCompleteSelect');

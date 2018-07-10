@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Whitelist;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
+use PhpParser\Node\Stmt\Return_;
 
 class WhitelistController extends Controller
 {
@@ -12,6 +14,25 @@ class WhitelistController extends Controller
 
     }
 
+
+    function autoCompleteSelect(Request $request, Category $categoriesModel){
+        $results = array();
+        if($request->ajax()){
+
+            $term = trim($request->{'search'});
+            if (empty($term)) {
+                return \Response::json([]);
+            }
+            $categories = $categoriesModel::search($term)->where('category_parent_id', 1)->take(5)->get();
+            foreach ($categories as $category){
+                $results[] = [
+                  'id' => $category->{'category_id'},
+                  'text' => $category->{'name_ru-RU'}
+                ];
+            }
+        }
+        return \Response::json($results);
+    }
     /**
      * @param int $id
      * @param Category $categoryModel

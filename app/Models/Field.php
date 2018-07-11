@@ -41,6 +41,7 @@ class Field extends Model
         }
         $preparedString = preg_replace( '~\|~', '', $preparedString, 1);
         $preparedString = '(?<field'.$this->{'field_id'}.'>'.$preparedString.')';
+
         return $preparedString;
     }
 }

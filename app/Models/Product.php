@@ -19,12 +19,15 @@ class Product extends Model
     static function errorProducts(){
         $productField = new ProductField;
 //        dd($productField->where('fields_value_id', 0)->get());
-        dd(Product::whereHas('fields', function ($query) {
-            $query->where('fields_value_id', 0);
-        })->with(['fields.value', 'fields.field' , 'model.parentCategory'])->paginate(10));
+        return Product::whereHas('fields', function ($query) {
+            $query->where([
+                ['fields_value_id', 0],
+                ['field_id', '<>', 9],
+            ]);
+        })->with(['fields.value', 'fields.field' , 'model.parentCategory'])->paginate(10);
     }
     public function scopeErrors($query)
     {
-        return $query->where('errors', true);
+        return $query->where('errors', true)->with(['fields.value', 'fields.field' , 'model.parentCategory']);
     }
 }

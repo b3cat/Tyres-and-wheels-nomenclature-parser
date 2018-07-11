@@ -7,6 +7,7 @@
                 <div class="list-group-item clearfix ">
                             <span class="h4">
                                 {{$manufacturer->{'name_ru-RU'} }}
+                                <span class="h6"><small>{{$manufacturer->{'parentCategory'}->{'name_ru-RU'} }}</small></span>
                             </span>
                     <span class="pull-right">
                                 <a href="#" data-categoryid="{{$manufacturer->{'category_id'} }}" class="btn btn-sm btn-info js-show-models">
@@ -24,8 +25,6 @@
     </div>
     <div class="col-6 whitelist-models">
 
-        @include('nomenclature.whitelists._modules._models', [
-            'models' => $models
-        ])
+        @include('nomenclature.whitelists._modules._models')
     </div>
 </div>

@@ -43,10 +43,15 @@ Route::group([
     'prefix' => 'tiresandwheels',
     'middleware' => ['role:content-manager']
 ], function() {
+    //Ajax routes
     Route::get('whitelists', 'NomenclatureController@whitelists')->name('whitelists.index');
     Route::post('whitelists/search', 'NomenclatureController@whitelistsSearch')->name('whitelists.search');
     Route::get('whitelists/search/{id}', 'NomenclatureController@whitelistsGetModels')->name('whitelists.getmodels');
+    Route::post('/whitelist/update', 'NomenclatureController@saveWhitelist')->name('whitelist.update');
     Route::get('whitelists/get/{id}', 'NomenclatureController@whitelistsGet')->name('whitelists.get');
+    Route::get('/parsererror/{id}', 'NomenclatureController@parserError')->name('parser.error');
+    Route::get('/parseagain/{id}', 'NomenclatureController@parseAgain')->name('parser.parseagain');
+    //
     Route::get('', 'NomenclatureController@index');
     Route::get('errors', 'NomenclatureController@errors');
     Route::post('/products/update', 'ProductController@updateFromErrors')->name('taw.product.update');

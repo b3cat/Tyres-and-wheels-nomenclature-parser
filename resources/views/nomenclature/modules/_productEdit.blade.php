@@ -3,7 +3,7 @@
                         </span><br>
         <br>
         <span class="h3 mt-2 "><mark>{{$product->{'source_string'} }}</mark>
-                            <button class="btn btn-sm  btn-outline-secondary">запарсить еще раз</button></span>
+                            <a data-productid="{{$product->{'id'} }}" href="#" class="btn btn-sm  btn-outline-secondary parse-again">запарсить еще раз</a></span>
 
         <br>
         <br>
@@ -36,7 +36,7 @@
             @endif
             <br>
         @endforeach
-        <a href="#" class="btn btn-outline-secondary btn-sm mt-4">Строка была обработана неверно</a>
+        <a href="#" data-productid="{{$product->{'id'} }}" class="btn btn-outline-secondary btn-sm mt-4 send-error">Строка была обработана неверно</a>
         <small class="form-text text-muted">Если из строки были получены не все возможные параметры,
             или они были получены неверно
         </small>

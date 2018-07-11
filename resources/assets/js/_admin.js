@@ -55,8 +55,15 @@ $(document).on('click', '.show-whitelist', function (e) {
     let categoryId = $(this).data('categoryid');
     $.get( '/tiresandwheels/whitelists/get/' + categoryId, function( data ) {
         console.log(data);
-        $('.whitelist-body').html(data);
-    }, 'html');
+        $('.whitelist-body').html(data.whitelist);
+        $('.category-id-input').val(data.categoryId);
+    }, 'json');
+});
+$(document).on('click', '.send-error', function (e) {
+    alert('1');
+   e.preventDefault();
+    let productId = $(this).data('productid');
+   $.get('/tiresandwheels/parsererror/' + productId);
 });
 
 $('.show-whitelists').click(function (elem) {
@@ -69,8 +76,20 @@ $('.show-whitelists').click(function (elem) {
 $(document).on('submit', '.update-product-form', function (e) {
     let form = $(this);
     e.preventDefault();
-    console.log(form.closest('.product-wrapper'));
     form.closest('.product-wrapper').load('/tiresandwheels/products/update', form.serializeArray());
+});
+$(document).on('click', '.parse-again', function (e) {
+    e.preventDefault();
+    let productId = $(this).data('productid');
+    $(this).closest('.product-wrapper').load('/tiresandwheels/parseagain/' + productId);
+    console.log(123);
+});
+$(document).on('submit', '.update-whitelist-form', function (e) {
+    let form = $(this);
+    e.preventDefault();
+    console.log(form.closest('.update-result'));
+    $.post('/tiresandwheels/whitelist/update', form.serialize());
+    form.closest('.update-result').load('/tiresandwheels/whitelist/update', form.serializeArray());
 });
 
 

@@ -38,7 +38,7 @@
     <div class="modal fade " id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered  " role="document">
             <div class="modal-content" >
-                {!! Form::open() !!}
+                {!! Form::open(['class' => 'update-whitelist-form']) !!}
                 <div class="modal-body">
                     <div class="container">
 
@@ -47,12 +47,16 @@
                             'label'=> 'Белый список',
                             'class' => 'whitelist-body'
                         ])
+                        {!! Form::hidden('whitelisted_id', null, ['class' => 'category-id-input']) !!}
+
+                    </div>
+                    <div class="update-result">
 
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    {{Form::button('Сохранить', ['class' => 'btn btn-success'])}}
+                    {{Form::submit('Сохранить', ['class' => 'btn btn-success'])}}
                 </div>
                 {!! Form::close() !!}
 

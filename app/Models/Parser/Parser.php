@@ -80,6 +80,7 @@ class Parser
         $sourceString = preg_replace('~,~', '.', $sourceString);
         $categoryModel = new Category;
         $response['sourceString'] = $sourceString;
+        $sourceString = mb_strtolower($sourceString);
         $response['manufacturer'] = $this->parseCategory($sourceString, $parameters['manufacturerWhitelists']);
         $modelWhitelists = Category::whitelists($response['manufacturer']['id']);
         $response['model'] = $this->parseCategory($sourceString, $modelWhitelists);
@@ -87,7 +88,6 @@ class Parser
         foreach ($fields as $currentFieldId => $field) {
             $response['fields'][$field->{'name_ru-RU'}] = $this->parseField($sourceString,
                 $field,
-                $parameters['parseSettings'][$currentFieldId]['regExpMask'],
                 isset($parameters['parseSettings'][$currentFieldId]['doNotTouchSourceString']) ? false : true);
         }
         if ($response['model']['id']) {
@@ -131,12 +131,13 @@ class Parser
             'displayName' => '',
             'status' => false
         ];
+
         $match = '';
         foreach ($whitelists as $manufacturerId => $whitelist) {
             foreach ($whitelist as $item) {
                 if (
-                    (stripos($sourceString, $item) !== false)
-                    && ($whitelist[0] > $response['displayName'])
+                    (mb_stripos($sourceString, $item) !== false)
+                    && (mb_strlen($whitelist[0]) > mb_strlen($response['displayName']))
                 ) {
                     $match = $item;
                     $response = [
@@ -158,11 +159,10 @@ class Parser
     /**
      * @param string $sourceString
      * @param Field $field
-     * @param string $regExpMask
      * @param bool $modifySourceString
      * @return array
      */
-    protected function parseField(&$sourceString, $field, $regExpMask, $modifySourceString = true)
+    protected function parseField(&$sourceString, $field)
     {
         $response = [
             'fieldId' => $field->{'field_id'},
@@ -171,6 +171,13 @@ class Parser
             'fieldName' => $field->{'name_ru-RU'},
             'status' => false,
         ];
+        $modifySourceString = $field->{'regExpMask'}->{'reg_exp_mask'}{0};
+        $modifySourceString = $modifySourceString === 'F' ? false : true;
+        if(!$modifySourceString){
+            $regExpMask = mb_substr($field->{'regExpMask'}->{'reg_exp_mask'}, 1);
+        } else {
+            $regExpMask = $field->{'regExpMask'}->{'reg_exp_mask'};
+        }
         $regExp = str_replace('_', $field->prepareForRegExp(), $regExpMask);
         $fieldsValueModel = new FieldsValue;
         if (preg_match($regExp, $sourceString, $m)) {

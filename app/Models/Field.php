@@ -21,6 +21,9 @@ class Field extends Model
         }
         return $response;
     }
+    public function regExpMask(){
+        return $this->hasOne('App\Models\FieldsRegExp', 'field_id', 'field_id');
+    }
     static function allValueLists(){
         $fields = Field::all();
         $response = [];

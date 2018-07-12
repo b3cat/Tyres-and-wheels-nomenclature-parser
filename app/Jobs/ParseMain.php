@@ -47,7 +47,8 @@ class ParseMain implements ShouldQueue
             $product = $productModel::create([
                 'category_id' => !is_null($result['model']['id']) ? $result['model']['id'] : 0,
                 'source_string' => $result['sourceString'],
-                'errors' => false
+                'errors' => false,
+                'non_critical_errors' => !$result['status']
             ]);
 //
             foreach ($result['fields'] as $item) {
@@ -55,7 +56,7 @@ class ParseMain implements ShouldQueue
                     $productFieldModel->create([
                         'field_id' => $item['fieldId'],
                         'fields_value_id' => $item['fieldsValueId'],
-                        'product_id' => $product->{'id'},
+                        'product_id' => $product->{'id'}
 
                     ]);
                     if (($item['fieldsValueId'] === 0) and ($item['fieldId'] !== 9)) {
@@ -63,6 +64,7 @@ class ParseMain implements ShouldQueue
                     }
                 }
             }
+
             $product->save();
             dump('Запарисл ' . ($key + 1) . ' строку');
         }

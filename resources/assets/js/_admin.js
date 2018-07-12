@@ -48,22 +48,23 @@ $('.js-categories-search').on('input', function (e) {
 $(document).on('click', '.js-show-models', function (e) {
     e.preventDefault();
     let categoryId = $(this).data('categoryid');
-    $('.whitelist-models').load('/tiresandwheels/whitelists/search/'+categoryId);
+    $('.whitelist-models').load('/tiresandwheels/whitelists/search/' + categoryId);
 });
 $(document).on('click', '.show-whitelist', function (e) {
     e.preventDefault();
     let categoryId = $(this).data('categoryid');
-    $.get( '/tiresandwheels/whitelists/get/' + categoryId, function( data ) {
+    $.get('/tiresandwheels/whitelists/get/' + categoryId, function (data) {
         console.log(data);
-        $('.whitelist-body').html(data.whitelist);
+        // $('.whitelist-body').html(data.whitelist);
+        $('.whitelist-body').val(data.whitelist)
         $('.category-id-input').val(data.categoryId);
     }, 'json');
 });
 $(document).on('click', '.send-error', function (e) {
     alert('1');
-   e.preventDefault();
+    e.preventDefault();
     let productId = $(this).data('productid');
-   $.get('/tiresandwheels/parsererror/' + productId);
+    $.get('/tiresandwheels/parsererror/' + productId);
 });
 
 $('.show-whitelists').click(function (elem) {
@@ -87,10 +88,24 @@ $(document).on('click', '.parse-again', function (e) {
 $(document).on('submit', '.update-whitelist-form', function (e) {
     let form = $(this);
     e.preventDefault();
-    console.log(form.closest('.update-result'));
     $.post('/tiresandwheels/whitelist/update', form.serialize());
-    form.closest('.update-result').load('/tiresandwheels/whitelist/update', form.serializeArray());
+
+});
+
+$(document).on('submit', '.update-regexps', function (e) {
+    e.preventDefault();
+    let form = $(this);
+    $.post('/tiresandwheels/parser/regexps/update', form.serializeArray(), (data) => {
+        form.closest('.reg-exp-container').find('.alert-block').html(data);
+    }, 'html');
+});
+$(document).on('submit', '.test-parse', function (e) {
+    e.preventDefault();
+    let form = $(this);
+    $.post('/tiresandwheels/parser/test', form.serializeArray(), (data) => {
+        form.closest('.check-parser').find('.parsing-result').html(data);
+    });
 });
 
 
-console.log('123');
+console.log('1234');

@@ -43,6 +43,18 @@ Route::group([
     'prefix' => 'tiresandwheels',
     'middleware' => ['role:content-manager']
 ], function() {
+    Route::group([
+        'prefix' => 'parser',
+        'middleware' => ['role:admin']
+    ], function() {
+        //Ajax routes
+        Route::post('regexps/update', 'NomenclatureController@updateRegExps')
+            ->name('parser.regexps.update');
+        Route::post('test', 'NomenclatureController@parserTest')
+            ->name('parser.test');
+        //
+        Route::get('regexps', 'NomenclatureController@showRegExps')->name('parser.regexps');
+    });
     //Ajax routes
     Route::get('whitelists', 'NomenclatureController@whitelists')->name('whitelists.index');
     Route::post('whitelists/search', 'NomenclatureController@whitelistsSearch')->name('whitelists.search');
@@ -51,9 +63,10 @@ Route::group([
     Route::get('whitelists/get/{id}', 'NomenclatureController@whitelistsGet')->name('whitelists.get');
     Route::get('/parsererror/{id}', 'NomenclatureController@parserError')->name('parser.error');
     Route::get('/parseagain/{id}', 'NomenclatureController@parseAgain')->name('parser.parseagain');
+    Route::post('/products/update', 'ProductController@updateFromErrors')->name('taw.product.update');
     //
     Route::get('', 'NomenclatureController@index');
     Route::get('errors', 'NomenclatureController@errors');
-    Route::post('/products/update', 'ProductController@updateFromErrors')->name('taw.product.update');
+    Route::get('nc-errors', 'NomenclatureController@nonCriticalErrors');
 });
 Route::get('/search/autocomplete', 'WhitelistController@autoCompleteSelect');

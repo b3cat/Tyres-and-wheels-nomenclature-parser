@@ -11,6 +11,21 @@ class Category extends Model
     use Searchable;
     public $asYouType = true;
 
+
+    public function fields()
+    {
+        return $this->hasMany('App\Models\Field', 'group', 'category_id');
+    }
+
+    public function isMainCategory()
+    {
+        return is_null($this->{'category_parent_id'});
+    }
+    public function mainCategories(){
+        return $this->where('category_parent_id', null)->with('fields.regExpMask')
+            ->get()->sortBy('category_id');
+    }
+
     public function toSearchableArray()
     {
         $array = $this->toArray();
@@ -35,8 +50,8 @@ class Category extends Model
     protected static function boot()
     {
         parent::boot();
-        static::addGlobalScope('alphabet', function (Builder $builder){
-           $builder->orderBy('name_ru-RU');
+        static::addGlobalScope('alphabet', function (Builder $builder) {
+            $builder->orderBy('name_ru-RU');
         });
     }
 
@@ -79,24 +94,22 @@ class Category extends Model
 
     static function whitelists($parentCategory = null)
     {
-        $whitelists = [];
-        if (is_null($parentCategory)) {
-            $categories = Category::with('whitelist')
-                ->get();
-        } else {
-            $categories = Category::with('whitelist')
-                ->where('category_parent_id', $parentCategory)
-                ->get();
-        }
-        foreach ($categories as $category){
+        $categories = Category::withoutGlobalScope('alphabet')->with('whitelist')
+            ->where('category_parent_id', $parentCategory)
+            ->get();
+        foreach ($categories as $category) {
             $whitelistBody = [
-              $category->{'name_ru-RU'}
+                $category->{'name_ru-RU'}
             ];
-            foreach ($category{'whitelist'} as $whitelist){
+            foreach ($category{'whitelist'} as $whitelist) {
                 $whitelistBody[] = $whitelist->{'string'};
             }
             $whitelists[$category->{'category_id'}] = $whitelistBody;
         }
+        $whitelists = collect($whitelists)->sortBy(function ($item) {
+            return mb_strlen($item[0]);
+        });
+
         return $whitelists;
     }
 

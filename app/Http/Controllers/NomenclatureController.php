@@ -12,6 +12,9 @@ use App\Models\Product;
 use App\Models\ProductField;
 use App\Models\Whitelist;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Cache;
 
 class NomenclatureController extends Controller
 {
@@ -27,11 +30,28 @@ class NomenclatureController extends Controller
 
     function errors()
     {
+        \Cache::store('redis')->put('Laradock', 'Awesome', 10);
 //        dd(Field::all()->where('group', 1));
         $errorProducts = Product::errors()->paginate(10);
         $fieldsValuesLists = Field::allValueLists();
         return view('nomenclature.errors', [
             'errorProducts' => $errorProducts,
+            'fieldsValuesLists' => $fieldsValuesLists
+        ]);
+    }
+    function nonCriticalErrors(Parser $parser){
+        /**
+         * @var  LengthAwarePaginator $ncErrorProducts
+         */
+        $ncErrorProducts = Product::nonCriticalErrors()->paginate(10);
+        $fieldsValuesLists = Field::allValueLists();
+        $currentPage = $ncErrorProducts->currentPage();
+        $lastPage = $ncErrorProducts->lastPage();
+        if($currentPage > $lastPage){
+            return redirect($ncErrorProducts->url($lastPage));
+        }
+        return view('nomenclature.errors', [
+            'errorProducts' => $ncErrorProducts,
             'fieldsValuesLists' => $fieldsValuesLists
         ]);
     }
@@ -92,7 +112,7 @@ class NomenclatureController extends Controller
     {
         $category = $categoryModel->where('category_id', $id)->first();
         $currentWhitelist = $category->whitelist;
-        $lineBreaker = '&#013;&#010;';
+        $lineBreaker = "\n";
         $whitelist = '';
         foreach ($currentWhitelist as $item) {
             $whitelist .= $item->{'string'} . $lineBreaker;
@@ -159,11 +179,41 @@ class NomenclatureController extends Controller
                 $product->{'errors'} = true;
             }
         }
+        $product->{'non_critical_errors'} = !$result['status'];
         $product->save();
         $fieldsValuesLists = Field::allValueLists();
         return view('nomenclature.modules._productEdit',[
             'product' => $product,
             'fieldsValuesLists' => $fieldsValuesLists
+        ]);
+    }
+    function showRegExps(Category $categoryModel){
+        $mainCategories = $categoryModel->mainCategories();
+        return view('nomenclature.parser.regexps.index', [
+            'mainCategories' => $mainCategories
+        ]);
+    }
+    function updateRegExps(Request $request, Category $categoryModel){
+        $data = $request->all();
+        $category = $categoryModel->where('category_id', $data['category_id'])->first();
+        foreach ($category->fields as $field){
+            /**
+             * @var Field $field
+             */
+            $mask = $field->{'regExpMask'};
+            $mask->{'reg_exp_mask'} = $data['regexp'.$field->{'field_id'}];
+            $mask->save();
+        }
+        return view('nomenclature.parser.regexps.modules._alert', [
+            'type' => 'success',
+            'text' => 'Регулярные выражения обновлены'
+        ]);
+    }
+    function parserTest(Request $request, Parser $parser){
+        $sourceString = $request->{'source_string'};
+        $response = $parser->parse($sourceString);
+        return view('nomenclature.parser.regexps.modules._results', [
+            'response' => $response
         ]);
     }
 }

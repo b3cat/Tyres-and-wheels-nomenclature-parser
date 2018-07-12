@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\FieldsRegExp;
 use App\Models\Field;
 use GuzzleHttp\Client;
 use Illuminate\Bus\Queueable;
@@ -22,6 +23,10 @@ class ParseExtraFields implements ShouldQueue
      */
     protected $fields;
     /**
+     * @var FieldsRegExp $fieldsRegExp
+     */
+    protected $fieldsRegExp;
+    /**
      * ParseExtraFields constructor.
      * @param $apiUrl
      */
@@ -33,8 +38,9 @@ class ParseExtraFields implements ShouldQueue
     /**
      * @param Field $fields
      */
-    public function handle(Field $fields)
+    public function handle(Field $fields, FieldsRegExp $fieldsRegExp)
     {
+        $this->fieldsRegExp = $fieldsRegExp;
         $this->fields = $fields;
         $this->parse($this->apiUrl);
     }
@@ -49,6 +55,10 @@ class ParseExtraFields implements ShouldQueue
             $name = $field->{'name_ru-RU'};
             $id = $field->{'id'};
             $group = $field->{'group'};
+            $this->fieldsRegExp::forceCreate([
+               'field_id' => $id,
+               'reg_exp_mask'  => '~_~'
+            ]);
             $field = $this->fields::firstOrCreate([
                 'field_id' => $id,
             ]);

@@ -66,7 +66,7 @@ class parse extends Command
                 }
                 break;
             case 'fields':
-                ParseExtraFields::dispatch('https://admin.shiniplus.ru/api/extrafields/');
+                ParseExtraFields::dispatchNow('https://admin.shiniplus.ru/api/extrafields/');
                 break;
             case 'fields-values':
                 $fields = $this->fields->all();

@@ -158,7 +158,8 @@ $(document).on('click', '.show-whitelist', function (e) {
     var categoryId = $(this).data('categoryid');
     $.get('/tiresandwheels/whitelists/get/' + categoryId, function (data) {
         console.log(data);
-        $('.whitelist-body').html(data.whitelist);
+        // $('.whitelist-body').html(data.whitelist);
+        $('.whitelist-body').val(data.whitelist);
         $('.category-id-input').val(data.categoryId);
     }, 'json');
 });
@@ -188,12 +189,25 @@ $(document).on('click', '.parse-again', function (e) {
 $(document).on('submit', '.update-whitelist-form', function (e) {
     var form = $(this);
     e.preventDefault();
-    console.log(form.closest('.update-result'));
     $.post('/tiresandwheels/whitelist/update', form.serialize());
-    form.closest('.update-result').load('/tiresandwheels/whitelist/update', form.serializeArray());
 });
 
-console.log('123');
+$(document).on('submit', '.update-regexps', function (e) {
+    e.preventDefault();
+    var form = $(this);
+    $.post('/tiresandwheels/parser/regexps/update', form.serializeArray(), function (data) {
+        form.closest('.reg-exp-container').find('.alert-block').html(data);
+    }, 'html');
+});
+$(document).on('submit', '.test-parse', function (e) {
+    e.preventDefault();
+    var form = $(this);
+    $.post('/tiresandwheels/parser/test', form.serializeArray(), function (data) {
+        form.closest('.check-parser').find('.parsing-result').html(data);
+    });
+});
+
+console.log('1234');
 
 /***/ }),
 /* 3 */

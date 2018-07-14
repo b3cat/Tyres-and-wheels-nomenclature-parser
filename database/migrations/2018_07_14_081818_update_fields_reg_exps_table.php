@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class UpdateProductsTable2 extends Migration
+class UpdateFieldsRegExpsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class UpdateProductsTable2 extends Migration
      */
     public function up()
     {
-        Schema::table('products', function (Blueprint $table){
-            $table->boolean('non_critical_errors');
+        Schema::table('fields_reg_exps', function (Blueprint $table){
+            $table->unsignedInteger('priority')->default(1);
         });
     }
 
@@ -25,9 +25,8 @@ class UpdateProductsTable2 extends Migration
      */
     public function down()
     {
-        Schema::table('products', function (Blueprint $table){
-            $table->dropColumn('non_critical_errors');
+        Schema::table('fields_reg_exps', function (Blueprint $table){
+            $table->dropColumn('priority');
         });
     }
 }
-

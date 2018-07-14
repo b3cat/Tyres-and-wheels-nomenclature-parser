@@ -14,22 +14,15 @@
                     <div class="alert-block">
 
                     </div>
-                    {!! Form::open(['class' => 'update-regexps']) !!}
-                    {!! Form::hidden('category_id', $category->{'category_id'}) !!}
-                    <div class="row">
-                        @foreach($category->{'fields'} as $field)
-                            <div class="col-3">
-                                @include('forms._input', [
-                                 'name' => 'regexp'.$field->{'field_id'},
-                                 'text' => $field->{'name_ru-RU'},
-                                 'value' => $field->{'regExpMask'}->{'reg_exp_mask'} ,
-                             ])
-                            </div>
-                        @endforeach
-                    </div>
-                    {{csrf_field()}}
-                    {{Form::submit('Сохранить', ['class' => 'btn btn-sm btn-success'])}}
-                    {!! Form::close() !!}
+                    @php($doNotShow = [])
+                    @foreach($category->fieldsWithPairs() as $field)
+
+                        <div class="row mt-4 reg-exp-container">
+                                @include('nomenclature.parser.regexps.modules._regEpsList')
+                        </div>
+
+                    @endforeach
+
                 </div>
             @endforeach
 
@@ -51,5 +44,5 @@
             <div class="col-lg-12 parsing-result">
 
             </div>
-    </div>
+        </div>
 @endsection

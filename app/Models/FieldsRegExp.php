@@ -8,6 +8,7 @@ class FieldsRegExp extends Model
 {
     protected $fillable = [
         'field_id',
-        'reg_exp_mask'
+        'reg_exp_mask',
+        'priority'
     ];
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\ErrorSourceString;
 use App\Models\Field;
+use App\Models\FieldsRegExp;
 use App\Models\FieldsValue;
 use App\Models\Nomenclature;
 use App\Models\Parser\Parser;
@@ -30,8 +31,7 @@ class NomenclatureController extends Controller
 
     function errors()
     {
-        \Cache::store('redis')->put('Laradock', 'Awesome', 10);
-//        dd(Field::all()->where('group', 1));
+        dd(Field::all()->find(1)->{'pairField'});
         $errorProducts = Product::errors()->paginate(10);
         $fieldsValuesLists = Field::allValueLists();
         return view('nomenclature.errors', [
@@ -39,7 +39,9 @@ class NomenclatureController extends Controller
             'fieldsValuesLists' => $fieldsValuesLists
         ]);
     }
-    function nonCriticalErrors(Parser $parser){
+
+    function nonCriticalErrors(Parser $parser)
+    {
         /**
          * @var  LengthAwarePaginator $ncErrorProducts
          */
@@ -47,7 +49,7 @@ class NomenclatureController extends Controller
         $fieldsValuesLists = Field::allValueLists();
         $currentPage = $ncErrorProducts->currentPage();
         $lastPage = $ncErrorProducts->lastPage();
-        if($currentPage > $lastPage){
+        if ($currentPage > $lastPage) {
             return redirect($ncErrorProducts->url($lastPage));
         }
         return view('nomenclature.errors', [
@@ -122,14 +124,16 @@ class NomenclatureController extends Controller
             'categoryId' => $category->{'id'}
         ]);
     }
-    function saveWhitelist(Request $request, Whitelist $whitelistModel){
-        if($request->ajax()){
-            $data  = $request->all(['whitelisted_id', 'whitelist']);
+
+    function saveWhitelist(Request $request, Whitelist $whitelistModel)
+    {
+        if ($request->ajax()) {
+            $data = $request->all(['whitelisted_id', 'whitelist']);
             $whitelistModel::where('whitelisted_id', $data['whitelisted_id'])->delete();
             $whitelist = preg_split('/\r\n|[\r\n]/', $data['whitelist']);
             $whitelistedType = 'App\Models\Category';
             $whitelistedId = $data['whitelisted_id'];
-            foreach ($whitelist as $string){
+            foreach ($whitelist as $string) {
                 $whitelistModel::firstOrCreate([
                     'whitelisted_type' => $whitelistedType,
                     'whitelisted_id' => $whitelistedId,
@@ -140,6 +144,7 @@ class NomenclatureController extends Controller
             abort(403);
         }
     }
+
     function parserError($id, Request $request, Product $productModel, ErrorSourceString $errorSourceString)
     {
         if ($request->ajax()) {
@@ -160,14 +165,15 @@ class NomenclatureController extends Controller
      * @param Product $productModel
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    function parseAgain($id, Parser $parser, Product $productModel){
+    function parseAgain($id, Parser $parser, Product $productModel)
+    {
         $product = $productModel->find($id);
         $product->{'errors'} = false;
         $result = $parser->parse($product->{'source_string'});
         $fields = $result['fields'];
         $modelFields = $product->fields;
         $product->{'category_id'} = $result['model']['id'];
-        foreach ($fields as $field){
+        foreach ($fields as $field) {
             /**
              * @var ProductField $changingField
              */
@@ -182,34 +188,58 @@ class NomenclatureController extends Controller
         $product->{'non_critical_errors'} = !$result['status'];
         $product->save();
         $fieldsValuesLists = Field::allValueLists();
-        return view('nomenclature.modules._productEdit',[
+        return view('nomenclature.modules._productEdit', [
             'product' => $product,
             'fieldsValuesLists' => $fieldsValuesLists
         ]);
     }
-    function showRegExps(Category $categoryModel){
+
+    function showRegExps(Category $categoryModel)
+    {
         $mainCategories = $categoryModel->mainCategories();
         return view('nomenclature.parser.regexps.index', [
             'mainCategories' => $mainCategories
         ]);
     }
-    function updateRegExps(Request $request, Category $categoryModel){
+
+    function updateRegExp(Request $request, FieldsRegExp $fieldsRegExpModel)
+    {
         $data = $request->all();
-        $category = $categoryModel->where('category_id', $data['category_id'])->first();
-        foreach ($category->fields as $field){
-            /**
-             * @var Field $field
-             */
-            $mask = $field->{'regExpMask'};
-            $mask->{'reg_exp_mask'} = $data['regexp'.$field->{'field_id'}];
-            $mask->save();
-        }
-        return view('nomenclature.parser.regexps.modules._alert', [
-            'type' => 'success',
-            'text' => 'Регулярные выражения обновлены'
+        $regExp = $fieldsRegExpModel->find($data['reg_exp_id']);
+        $regExp->{'reg_exp_mask'} = $data['reg-exp-mask'];
+        $regExp->{'priority'} = $data['priority'];
+        $regExp->save();
+        return true;
+    }
+
+    function addRegExp(Request $request, Field $fieldModel, FieldsRegExp $fieldsRegExpModel)
+    {
+        $data = $request->all();
+        $field = $fieldModel->where('field_id', $data['field_id'])->first();
+        $priority = $field->{'regExpMasks'}->count() + 1;
+        $fieldsRegExpModel::create([
+            'field_id' => $data['field_id'],
+            'reg_exp_mask' => $data['regexp'],
+            'priority' => $priority
+        ]);
+        $field = $field->fresh();
+        return view('nomenclature.parser.regexps.modules._regEpsList', [
+            'field' => $field
         ]);
     }
-    function parserTest(Request $request, Parser $parser){
+
+    function deleteRegExp($id, FieldsRegExp $fieldsRegExpModel, Field $fieldModel){
+
+        $regExp = $fieldsRegExpModel->find($id);
+        $field = $fieldModel->where('field_id', $regExp->{'field_id'})->first();
+        $regExp->delete();
+        return view('nomenclature.parser.regexps.modules._regEpsList', [
+            'field' => $field
+        ]);
+
+    }
+    function parserTest(Request $request, Parser $parser)
+    {
         $sourceString = $request->{'source_string'};
         $response = $parser->parse($sourceString);
         return view('nomenclature.parser.regexps.modules._results', [

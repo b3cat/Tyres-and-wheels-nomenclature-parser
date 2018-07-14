@@ -16,13 +16,53 @@ class Category extends Model
     {
         return $this->hasMany('App\Models\Field', 'group', 'category_id');
     }
+    public function fieldsWithPairs(){
+        $fields = $this->{'fields'};
+        $allFields = collect([]);
+        $toForget = [];
+        foreach ($fields as $field){
+            /**
+             * @var Field $field
+             */
+            $allFields->put($field->{'field_id'}, $field);
+            if($field->isPairField()){
+                if(!isset($toForget[$field->{'field_id'}])){
+                    $toForget[$field->{'pairField'}->{'field_id'}] = true;
+                }
+            }
+        }
+        foreach ($toForget as $key => $item){
+            $allFields->forget($key);
+        }
+        return $allFields;
+    }
+    public function pairFields(){
+        $fields = $this->{'fields'};
+        $pairFields = collect([]);
+        $toForget = [];
+        foreach ($fields as $field){
+            /**
+             * @var Field $field
+             */
+            if($field->isPairField()){
+                $pairFields->put($field->{'field_id'}, $field);
+                if(!isset($toForget[$field->{'field_id'}])){
+                    $toForget[$field->{'pairField'}->{'field_id'}] = true;
+                }
+            }
+        }
+        foreach ($toForget as $key => $item){
+            $pairFields->forget($key);
+        }
+        return $pairFields;
+    }
 
     public function isMainCategory()
     {
         return is_null($this->{'category_parent_id'});
     }
     public function mainCategories(){
-        return $this->where('category_parent_id', null)->with('fields.regExpMask')
+        return $this->where('category_parent_id', null)->with('fields.regExpMasks')
             ->get()->sortBy('category_id');
     }
 

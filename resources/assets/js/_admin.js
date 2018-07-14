@@ -83,7 +83,6 @@ $(document).on('click', '.parse-again', function (e) {
     e.preventDefault();
     let productId = $(this).data('productid');
     $(this).closest('.product-wrapper').load('/tiresandwheels/parseagain/' + productId);
-    console.log(123);
 });
 $(document).on('submit', '.update-whitelist-form', function (e) {
     let form = $(this);
@@ -92,12 +91,11 @@ $(document).on('submit', '.update-whitelist-form', function (e) {
 
 });
 
-$(document).on('submit', '.update-regexps', function (e) {
+$(document).on('submit', '.update-reg-exp', function (e) {
     e.preventDefault();
-    let form = $(this);
-    $.post('/tiresandwheels/parser/regexps/update', form.serializeArray(), (data) => {
-        form.closest('.reg-exp-container').find('.alert-block').html(data);
-    }, 'html');
+    let form = $(e.target);
+
+    $.post('/tiresandwheels/parser/regexp/update', form.serializeArray());
 });
 $(document).on('submit', '.test-parse', function (e) {
     e.preventDefault();
@@ -105,6 +103,45 @@ $(document).on('submit', '.test-parse', function (e) {
     $.post('/tiresandwheels/parser/test', form.serializeArray(), (data) => {
         form.closest('.check-parser').find('.parsing-result').html(data);
     });
+});
+$(document).on('submit', '.make-a-pair', function (e) {
+    e.preventDefault();
+    let form = $(this);
+    $.post('/tiresandwheels/parser/pairfields/make', form.serializeArray(), (data) => {
+        $('.show-table').html(data);
+    });
+});
+
+$(document).on('click', '.show-add-reg-exp-form', function (e) {
+    e.preventDefault();
+    $(this).closest('.row').find('.add-reg-exp-form').toggle();
+});
+$(document).on('submit', '.add-reg-exp', (e) => {
+    e.preventDefault();
+    let form = $(e.target);
+    $.post('/tiresandwheels/parser/regexps/add', form.serializeArray(), (data) => {
+        form.closest('.reg-exp-container').html(data);
+    }, 'html');
+});
+$(document).on('click', '.delete-reg-exp', (e) => {
+    e.preventDefault();
+    let container = $(e.target).closest('.reg-exp-container');
+    let regExpId = $(e.target).data('regexpid');
+    $.ajax({
+        url: '/tiresandwheels/parser/regexps/delete/' + regExpId,
+        type: 'post',
+        data: {
+          _token: $('meta[name="csrf-token"]').attr('content'),
+        },
+
+        success: function (data) {
+            container.html(data);
+        }
+    });
+
+    // $.post('/tiresandwheels/parser/regexps/delete/' + regExpId, (data) => {
+    //     container.html(data);
+    // });
 });
 
 

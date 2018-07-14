@@ -17,58 +17,16 @@ class Parser
             1 => [
                 'manufacturerWhitelists' => Category::whitelists(1),
                 'fields' => Field::all()->where('group', 1),
-                'parseSettings' => [
-                    [
-                        'regExpMask' => '~_[/x\*]~i',
-                        'doNotTouchSourceString' => true
-                    ],
-                    ['regExpMask' => '~(?:^| )[0-9]+[/x\*]_~'],
-                    ['regExpMask' => '~[R/] *_~i'],
-                    [
-                        'regExpMask' => '~_\(*[A-Z]~',
-                        'doNotTouchSourceString' => true
-                    ],
-                    ['regExpMask' => '~[0-9]*[/]{0,1}[0-9\(]+_\)*~'],
-                    ['regExpMask' => '~_~'], ['regExpMask' => '~_~'], ['regExpMask' => '~_~'], ['regExpMask' => '~_~'], ['regExpMask' => '~_~']
-                ]
             ],
             2 => [
                 'manufacturerWhitelists' => Category::whitelists(2),
                 'fields' => Field::all()->where('group', 2),
-                'parseSettings' => [
-                    9 => [
-                        'regExpMask' => '~_[\.[0-9]*[хx\*/]~i',
-                        'doNotTouchSourceString' => true
-                    ],
-                    10 => [
-                        'regExpMask' => '~(?<toDelete>[0-9]+[\.]*[0-9]*[хx\*/]_)~ui',
-                    ],
-                    11 => [
-                        'regExpMask' => '~_[\.[0-9]*[хx\*/]~i',
-                        'doNotTouchSourceString' => true
-                    ],
-                    12 => [
-                        'regExpMask' => '~(?<toDelete>[0-9]+[хx\*/]_)~ui',
-                    ],
-                    13 => [
-                        'regExpMask' => '~(?:DIA|d)\s*_~',
-                    ],
-                    14 => [
-                        'regExpMask' => '~ET\s*_~i',
-                    ],
-                    15 => [
-                        'regExpMask' => '~pizda~i',
-                    ],
-                    16 => [
-                        'regExpMask' => '~\W_\W~i',
-                    ],
-                ]
             ]
         ];
     }
     protected function findGroupId($sourceString){
         $groupId = 1;
-        if (preg_match('~(?:диск| DIA[\s\d]| ET[\s\d])~i', $sourceString)) {
+        if (preg_match('~(?:диск| DIA[\s\d]| ET[\s\d])~ui', $sourceString)) {
             $groupId = 2;
         }
         return $groupId;
@@ -137,12 +95,13 @@ class Parser
             foreach ($whitelist as $item) {
                 if (
                     (mb_stripos($sourceString, $item) !== false)
-                    && (mb_strlen($whitelist[0]) > mb_strlen($response['displayName']))
+                    && (mb_strlen($item) > mb_strlen($response['displayName']))
                 ) {
+                    dump($item);
                     $match = $item;
                     $response = [
                         'id' => $manufacturerId,
-                        'displayName' => $whitelist[0],
+                        'displayName' => $item,
                         'status' => true
                     ];
                 }
@@ -159,7 +118,6 @@ class Parser
     /**
      * @param string $sourceString
      * @param Field $field
-     * @param bool $modifySourceString
      * @return array
      */
     protected function parseField(&$sourceString, $field)
@@ -179,6 +137,9 @@ class Parser
             $regExpMask = $field->{'regExpMask'}->{'reg_exp_mask'};
         }
         $regExp = str_replace('_', $field->prepareForRegExp(), $regExpMask);
+        dump($regExp);
+
+//        dump($sourceString, $regExp);
         $fieldsValueModel = new FieldsValue;
         if (preg_match($regExp, $sourceString, $m)) {
             $response['displayValue'] = $m['field' . $field->{'field_id'}];

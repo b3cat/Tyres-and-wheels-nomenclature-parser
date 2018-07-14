@@ -48,12 +48,20 @@ Route::group([
         'middleware' => ['role:admin']
     ], function() {
         //Ajax routes
-        Route::post('regexps/update', 'NomenclatureController@updateRegExps')
+        Route::post('regexps/add', 'NomenclatureController@addRegExp')
+            ->name('parser.regexps.add');
+        Route::post('regexps/delete/{id}', 'NomenclatureController@deleteRegExp')
+            ->name('parser.regexps.delete');
+        Route::post('regexp/update', 'NomenclatureController@updateRegExp')
             ->name('parser.regexps.update');
         Route::post('test', 'NomenclatureController@parserTest')
             ->name('parser.test');
+        Route::post('pairfields/make', 'FieldController@makePairFields')
+            ->name('parser.pairFields.make');
+
         //
         Route::get('regexps', 'NomenclatureController@showRegExps')->name('parser.regexps');
+        Route::get('pairfields', 'FieldController@pairFields')->name('parser.pairFields');
     });
     //Ajax routes
     Route::get('whitelists', 'NomenclatureController@whitelists')->name('whitelists.index');

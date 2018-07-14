@@ -40,7 +40,7 @@ class ParseMain implements ShouldQueue
      */
     public function handle(Nomenclature $nomenclatureModel, Parser $parser, TestResult $testResultModel, Product $productModel, ProductField $productFieldModel, Category $categoryModel)
     {
-        $nomenclatures = $nomenclatureModel->all();
+        $nomenclatures = $nomenclatureModel->inRandomOrder()->limit(100)->get();
         foreach ($nomenclatures as $key => $nomenclature) {
             $string = $nomenclature->{'source_string'};
             $result = $parser->parse($string);

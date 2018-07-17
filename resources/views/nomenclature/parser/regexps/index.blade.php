@@ -7,7 +7,23 @@
 
         </h2>
         <div class="row mt-5">
+            @foreach($mainCategories as $category)
+                {{Form::open([
+                    'class' => 'col-lg-12 mb-3'
+                ])}}
+                <div class="">
 
+                    {{Form::hidden('category_id', $category->{'category_id'})}}
+                    @include('forms._input', [
+                        'name' => $category->{'category_id'},
+                        'text' => 'Регулряное выражение для определения категории '.$category->{'name_ru-RU'},
+                        'value' => $category->{'regExp'}->{'regExpValue'}->{'reg_exp'}
+                    ])
+                    {{Form::submit('Обновить', ['class' => 'btn btn-success'])}}
+                </div>
+                {{Form::close()}}
+
+            @endforeach
             @foreach($mainCategories as $category)
                 <div class="col-12 mb-3 reg-exp-container">
                     <h3>{{$category->{'name_ru-RU'} }}</h3>
@@ -18,7 +34,7 @@
                     @foreach($category->fieldsWithPairs() as $field)
 
                         <div class="row mt-4 reg-exp-container">
-                                @include('nomenclature.parser.regexps.modules._regEpsList')
+                            @include('nomenclature.parser.regexps.modules._regEpsList')
                         </div>
 
                     @endforeach

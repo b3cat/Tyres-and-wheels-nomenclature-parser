@@ -94,7 +94,9 @@ class Category extends Model
             $builder->orderBy('name_ru-RU');
         });
     }
-
+    public function regExp(){
+        return $this->hasOne(CategoriesRegExp::class, 'category_id', 'category_id');
+    }
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */

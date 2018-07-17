@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CategoriesRegExp;
 use App\Models\Category;
 use App\Models\ErrorSourceString;
 use App\Models\Field;
@@ -11,6 +12,7 @@ use App\Models\Nomenclature;
 use App\Models\Parser\Parser;
 use App\Models\Product;
 use App\Models\ProductField;
+use App\Models\RegExp;
 use App\Models\Whitelist;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -31,6 +33,11 @@ class NomenclatureController extends Controller
 
     function errors(Parser $parser)
     {
+        $categoryModel = new Category;
+        $category = $categoryModel->where('category_id', 1)->first();
+        dd($category->{'regExp'}->{'regExpValue'}->{'reg_exp'});
+
+
         $errorProducts = Product::errors()->paginate(10);
         $fieldsValuesLists = Field::allValueLists();
         return view('nomenclature.errors', [

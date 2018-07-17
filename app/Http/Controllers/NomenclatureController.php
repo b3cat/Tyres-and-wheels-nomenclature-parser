@@ -29,9 +29,8 @@ class NomenclatureController extends Controller
         return view('nomenclature.test');
     }
 
-    function errors()
+    function errors(Parser $parser)
     {
-        dd(Field::all()->find(1)->{'pairField'});
         $errorProducts = Product::errors()->paginate(10);
         $fieldsValuesLists = Field::allValueLists();
         return view('nomenclature.errors', [
@@ -202,7 +201,7 @@ class NomenclatureController extends Controller
         ]);
     }
 
-    function updateRegExp(Request $request, FieldsRegExp $fieldsRegExpModel)
+    function updateRegExp(Request $request, FieldsRegExp $fieldsRegExpModel, Field $fieldModel)
     {
         $data = $request->all();
         $regExp = $fieldsRegExpModel->find($data['reg_exp_id']);

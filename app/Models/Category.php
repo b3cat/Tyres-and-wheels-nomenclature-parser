@@ -137,6 +137,7 @@ class Category extends Model
         $categories = Category::withoutGlobalScope('alphabet')->with('whitelist')
             ->where('category_parent_id', $parentCategory)
             ->get();
+        $whitelists = [];
         foreach ($categories as $category) {
             $whitelistBody = [
                 $category->{'name_ru-RU'}

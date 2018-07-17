@@ -13,24 +13,28 @@ class Parser
 
     public function __construct()
     {
+        $categoryModel = new Category;
         $this->parameters = [
             1 => [
                 'manufacturerWhitelists' => Category::whitelists(1),
-                'fields' => Field::all()->where('group', 1),
+                'fields' => $categoryModel->where('category_id', 1)->first()->fieldsWithPairs(),
             ],
             2 => [
                 'manufacturerWhitelists' => Category::whitelists(2),
-                'fields' => Field::all()->where('group', 2),
+                'fields' => $categoryModel->where('category_id', 2)->first()->fieldsWithPairs(),
             ]
         ];
     }
-    protected function findGroupId($sourceString){
+
+    protected function findGroupId($sourceString)
+    {
         $groupId = 1;
         if (preg_match('~(?:диск| DIA[\s\d]| ET[\s\d])~ui', $sourceString)) {
             $groupId = 2;
         }
         return $groupId;
     }
+
     public function parse($sourceString)
     {
         $groupId = $this->findGroupId($sourceString);
@@ -44,9 +48,16 @@ class Parser
         $response['model'] = $this->parseCategory($sourceString, $modelWhitelists);
         $fields = $parameters['fields'];
         foreach ($fields as $currentFieldId => $field) {
-            $response['fields'][$field->{'name_ru-RU'}] = $this->parseField($sourceString,
-                $field,
-                isset($parameters['parseSettings'][$currentFieldId]['doNotTouchSourceString']) ? false : true);
+            /**
+             * @var Field $field
+             */
+            $fieldResponse = $this->parseField($sourceString, $field);
+            if($field->isPairField()){
+                $response['fields'][$field->{'name_ru-RU'}] = $fieldResponse[0];
+                $response['fields'][$field->{'pairField'}->{'name_ru-RU'}] = $fieldResponse[1];
+            } else {
+                $response['fields'][$field->{'name_ru-RU'}] = $fieldResponse;
+            }
         }
         if ($response['model']['id']) {
 //            $fieldsFromCategory = $categoryModel
@@ -74,6 +85,7 @@ class Parser
         }
 
         $response['status'] = !preg_match('~\w~', $sourceString) ? true : false;
+//        dd($sourceString);
         return $response;
     }
 
@@ -94,10 +106,10 @@ class Parser
         foreach ($whitelists as $manufacturerId => $whitelist) {
             foreach ($whitelist as $item) {
                 if (
-                    (mb_stripos($sourceString, $item) !== false)
+                    ($item !== '')
+                    && (mb_stripos($sourceString, $item) !== false)
                     && (mb_strlen($item) > mb_strlen($response['displayName']))
                 ) {
-                    dump($item);
                     $match = $item;
                     $response = [
                         'id' => $manufacturerId,
@@ -122,34 +134,77 @@ class Parser
      */
     protected function parseField(&$sourceString, $field)
     {
-        $response = [
-            'fieldId' => $field->{'field_id'},
-            'fieldsValueId' => 0,
-            'displayValue' => '',
-            'fieldName' => $field->{'name_ru-RU'},
-            'status' => false,
-        ];
-        $modifySourceString = $field->{'regExpMask'}->{'reg_exp_mask'}{0};
-        $modifySourceString = $modifySourceString === 'F' ? false : true;
-        if(!$modifySourceString){
-            $regExpMask = mb_substr($field->{'regExpMask'}->{'reg_exp_mask'}, 1);
-        } else {
-            $regExpMask = $field->{'regExpMask'}->{'reg_exp_mask'};
-        }
-        $regExp = str_replace('_', $field->prepareForRegExp(), $regExpMask);
-        dump($regExp);
-
-//        dump($sourceString, $regExp);
+        $isPair = $field->isPairField();
         $fieldsValueModel = new FieldsValue;
-        if (preg_match($regExp, $sourceString, $m)) {
-            $response['displayValue'] = $m['field' . $field->{'field_id'}];
-            $response['fieldsValueId'] = $fieldsValueModel->where([
-                ['field_id', '=', $field->{'field_id'}],
-                ['name_ru-RU', '=', $response['displayValue']]
-            ])->first()->{'fields_value_id'};
-            $response['status'] = true;
-            if ($modifySourceString) {
-                $sourceString = str_replace(isset($m['toDelete']) ? $m['toDelete'] : $m[0], '', $sourceString);
+        if (!$isPair) {
+            $response = [
+                'fieldId' => $field->{'field_id'},
+                'fieldsValueId' => 0,
+                'displayValue' => '',
+                'fieldName' => $field->{'name_ru-RU'},
+                'status' => false,
+            ];
+        } else {
+            $response = [
+                [
+                    'fieldId' => $field->{'field_id'},
+                    'fieldsValueId' => 0,
+                    'displayValue' => '',
+                    'fieldName' => $field->{'name_ru-RU'},
+                    'status' => false,
+                ],
+                [
+                    'fieldId' => $field->{'pairField'}->{'field_id'},
+                    'fieldsValueId' => 0,
+                    'displayValue' => '',
+                    'fieldName' => $field->{'pairField'}->{'name_ru-RU'},
+                    'status' => false,
+                ]
+            ];
+        }
+        $regExps = $field->{'regExpMasks'}->sortBy('priority');
+        foreach ($regExps as $regExp) {
+//            dump($sourceString);
+
+            $modifySourceString = $regExp->{'reg_exp_mask'}{0};
+            $modifySourceString = $modifySourceString === 'F' ? false : true;
+            if (!$modifySourceString) {
+                $regExpMask = mb_substr($regExp->{'reg_exp_mask'}, 1);
+            } else {
+                $regExpMask = $regExp->{'reg_exp_mask'};
+            }
+            $regExpForParse = str_replace('_', $field->prepareForRegExp(), $regExpMask);
+
+            if ($isPair) {
+                $regExpForParse = str_replace('@', $field->{'pairField'}->prepareForRegExp(), $regExpForParse);
+            }
+            if (preg_match($regExpForParse, $sourceString, $m)) {
+                if($isPair){
+                    $response[0]['displayValue'] = $m['field' . $field->{'field_id'}];
+                    $response[0]['fieldsValueId'] = $fieldsValueModel->where([
+                        ['field_id', '=', $field->{'field_id'}],
+                        ['name_ru-RU', '=', $response[0]['displayValue']]
+                    ])->first()->{'fields_value_id'};
+                    $response[0]['status'] = true;
+
+                    $response[1]['displayValue'] = $m['field' . $field->{'pairField'}->{'field_id'}];
+                    $response[1]['fieldsValueId'] = $fieldsValueModel->where([
+                        ['field_id', '=', $field->{'pairField'}->{'field_id'}],
+                        ['name_ru-RU', '=', $response[1]['displayValue']]
+                    ])->first()->{'fields_value_id'};
+                    $response[1]['status'] = true;
+                } else {
+                    $response['displayValue'] = $m['field' . $field->{'field_id'}];
+                    $response['fieldsValueId'] = $fieldsValueModel->where([
+                        ['field_id', '=', $field->{'field_id'}],
+                        ['name_ru-RU', '=', $response['displayValue']]
+                    ])->first()->{'fields_value_id'};
+                    $response['status'] = true;
+                }
+                if ($modifySourceString) {
+                    $sourceString = str_replace(isset($m['toDelete']) ? $m['toDelete'] : $m[0], '', $sourceString);
+                }
+                break;
             }
         }
         return $response;

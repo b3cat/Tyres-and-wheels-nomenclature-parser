@@ -46,8 +46,19 @@ class Parser
         return $groupId;
     }
 
+    /**
+     * @param $sourceString
+     * @return array
+     */
     public function parse($sourceString)
     {
+        $response = [
+            'sourceString' => '',
+            'manufacturer' => [],
+            'model' => [],
+            'fields' => [],
+            'status' => true
+        ];
         $groupId = $this->findGroupId($sourceString);
         $sourceString = preg_replace('~,~', '.', $sourceString);
         $response['sourceString'] = $sourceString;

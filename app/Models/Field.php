@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class Field extends Model
 {
@@ -10,16 +11,57 @@ class Field extends Model
         'field_id', 'group', 'name_ru-RU',
     ];
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
     public function values()
     {
-        return $this->hasMany('App\Models\FieldsValue', 'field_id', 'field_id');
+        return $this->hasMany(FieldsValue::class, 'field_id', 'field_id');
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
     public function pairField()
     {
-        return $this->hasOne('App\Models\Field', 'field_id', 'pair_field_id');
+        return $this->hasOne(FieldsValue::class, 'field_id', 'pair_field_id');
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function regExpMasks()
+    {
+        return $this->hasMany(FieldsRegExp::class, 'field_id', 'field_id');
+    }
+
+    /**
+     * @return integer
+     */
+    public function getFieldId()
+    {
+        return $this->{'field_id'};
+    }
+
+    /**
+     * @return integer
+     */
+    public function getGroup()
+    {
+        return $this->{'group'};
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->{'name_ru-RU'};
+    }
+
+    /**
+     * @return bool
+     */
     public function isPairField()
     {
         if (!is_null($this->{'pairField'})) {
@@ -29,22 +71,20 @@ class Field extends Model
         }
     }
 
+    /**
+     * @return Collection
+     */
     public function valuesList()
     {
         $values = $this->{'values'};
-        $response = [];
-        $response[0] = 'Нет значения';
-        foreach ($values as $value) {
-            $response[$value->{'fields_value_id'}] = $value->{'name_ru-RU'};
-        }
+        $response = ($values->pluck('name_ru-RU', 'fields_value_id'));
+        $response->prepend('Нет значения', 0);
         return $response;
     }
 
-    public function regExpMasks()
-    {
-        return $this->hasMany('App\Models\FieldsRegExp', 'field_id', 'field_id');
-    }
-
+    /**
+     * @return array
+     */
     static function allValueLists()
     {
         $fields = Field::all();
@@ -52,9 +92,12 @@ class Field extends Model
         foreach ($fields as $field) {
             $response[$field->{'field_id'}] = $field->valuesList();
         }
-        return $response;
+        return collect($response);
     }
 
+    /**
+     * @return string
+     */
     public function prepareForRegExp()
     {
         $values = $this->{'values'};

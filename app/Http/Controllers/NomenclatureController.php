@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Cache;
 
 class NomenclatureController extends Controller
 {
+
     function index()
     {
         return view('nomenclature.index');
@@ -33,10 +34,6 @@ class NomenclatureController extends Controller
 
     function errors(Parser $parser)
     {
-        $categoryModel = new Category;
-        $category = $categoryModel->where('category_id', 1)->first();
-        dd($category->{'regExp'}->{'regExpValue'}->{'reg_exp'});
-
 
         $errorProducts = Product::errors()->paginate(10);
         $fieldsValuesLists = Field::allValueLists();

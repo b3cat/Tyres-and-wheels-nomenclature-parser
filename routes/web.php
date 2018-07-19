@@ -42,11 +42,11 @@ Route::group(['middleware' => ['role:admin']], function () {
 Route::group([
     'prefix' => 'tiresandwheels',
     'middleware' => ['role:content-manager']
-], function() {
+], function () {
     Route::group([
         'prefix' => 'parser',
         'middleware' => ['role:admin']
-    ], function() {
+    ], function () {
         //Ajax routes
         Route::post('regexps/add', 'NomenclatureController@addRegExp')
             ->name('parser.regexps.add');
@@ -76,5 +76,11 @@ Route::group([
     Route::get('', 'NomenclatureController@index');
     Route::get('errors', 'NomenclatureController@errors');
     Route::get('nc-errors', 'NomenclatureController@nonCriticalErrors');
+});
+Route::group([
+    'prefix' => 'apisettings',
+    'middleware' => ['role:admin']
+], function () {
+    Route::get('', 'ApiController@index');
 });
 Route::get('/search/autocomplete', 'WhitelistController@autoCompleteSelect');

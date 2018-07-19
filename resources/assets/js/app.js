@@ -5,10 +5,9 @@
 //  * building robust, powerful web applications using Vue and Laravel.
 //  */
 //
-// require('./bootstrap');
 require('./_admin');
+// let Vue = require('vue');
 //
-// window.Vue = require('vue');
 //
 // /**
 //  * Next, we will create a fresh Vue application instance and attach it to
@@ -18,6 +17,33 @@ require('./_admin');
 //
 // Vue.component('example-component', require('./components/ExampleComponent.vue'));
 //
-// const app = new Vue({
-//     el: '#app'
-// });
+// console.log(Vue);
+require('./bootstrap');
+
+window.axios = require('axios');
+window.Vue = require('vue');
+window.axios.defaults.headers.common = {
+    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+    'X-Requested-With': 'XMLHttpRequest'
+};
+Vue.prototype.$http = axios;
+Vue.use(axios);
+Vue.component(
+    'passport-clients',
+    require('./components/passport/Clients.vue')
+);
+Vue.component(
+    'passport-authorized-clients',
+    require('./components/passport/AuthorizedClients.vue')
+);
+
+Vue.component(
+    'passport-personal-access-tokens',
+    require('./components/passport/PersonalAccessTokens.vue')
+);
+const app = new Vue({
+    el: '#app'
+});
+
+
+

@@ -27,6 +27,7 @@
         <span class=" badge badge-danger">Значения нет</span>
     @endif
     <br>
+
     @foreach($product->fields as $field)
         {{ $field->field->getName() }}:
         @if($field->value !== null)

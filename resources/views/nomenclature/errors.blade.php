@@ -3,6 +3,10 @@
 @section('content')
     <div class="mb-3 py-3 bg-white border-bottom ">
         <div class="container ">
+            <div id="app">
+                <passport-clients></passport-clients>
+
+            </div>
 
             {!! Form::open(['route'=>'roles.index','method'=>'GET', 'class'=> 'form-inline']) !!}
             <div class="btn-group mr-2 mb-2" role="group">

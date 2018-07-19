@@ -109,7 +109,7 @@ return [
         'client' => 'predis',
 
         'default' => [
-            'host' => 'redis',
+            'host' => env('REDIS_HOST', 'redis'),
 //            'password' => env('REDIS_PASSWORD', null),
             'port' => env('REDIS_PORT', 6379),
             'database' => 0,

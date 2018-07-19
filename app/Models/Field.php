@@ -24,7 +24,7 @@ class Field extends Model
      */
     public function pairField()
     {
-        return $this->hasOne(FieldsValue::class, 'field_id', 'pair_field_id');
+        return $this->hasOne(Field::class, 'field_id', 'pair_field_id');
     }
 
     /**

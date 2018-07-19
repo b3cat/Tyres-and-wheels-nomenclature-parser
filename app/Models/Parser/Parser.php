@@ -157,6 +157,7 @@ class Parser
     protected function parseField(&$sourceString, $field)
     {
         $isPair = $field->isPairField();
+        echo $isPair.' категория '.$field->getName();
         if (!$isPair) {
             $response = [
                 'fieldId' => $field->{'field_id'},
@@ -183,7 +184,9 @@ class Parser
                 ]
             ];
         }
+
         $regExps = $field->{'regExpMasks'}->sortBy('priority');
+        dump($field->prepareForRegExp());
         foreach ($regExps as $regExp) {
 //            dump($sourceString);
 
@@ -194,10 +197,11 @@ class Parser
             } else {
                 $regExpMask = $regExp->{'reg_exp_mask'};
             }
-            $regExpForParse = str_replace('_', $field->prepareForRegExp(), $regExpMask);
 
+
+            $regExpForParse = str_replace('_', $field->prepareForRegExp(), $regExpMask);
             if ($isPair) {
-                $regExpForParse = str_replace('@', $field->{'pairField'}->prepareForRegExp(), $regExpForParse);
+                $regExpForParse = str_replace('@', $field->pairField->prepareForRegExp(), $regExpForParse);
             }
             if (preg_match($regExpForParse, $sourceString, $m)) {
                 if ($isPair) {

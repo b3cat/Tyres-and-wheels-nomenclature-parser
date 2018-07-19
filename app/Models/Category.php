@@ -119,6 +119,7 @@ class Category extends Model
         foreach ($toForget as $key => $item) {
             $allFields->forget($key);
         }
+
         return $allFields;
     }
 
